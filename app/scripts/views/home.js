@@ -14,23 +14,26 @@ class HomeView {
     LocationService,
     WeatherService,
     GeoService,
-    // SpaceService
+    SpaceService
   ) {
     this._document = _document;
     this.locationService = LocationService;
     this.weatherService = WeatherService;
-    this.geoService = GeoService;
-    // this.spaceService = SpaceService;
-    this.currentLocation = LocationService.getLocation();
     this.weather = null;
     this.weatherPreviewExtendedTotal = 5;
+    this.geoService = GeoService;
     this.geoData = null;
     this.startTime = 1000 * 60 * 60 * 24 * 14;
     this.maxRadius = 100;
     this.geoLimit = 25;
+    this.spaceService = SpaceService;
+    this.overheadSatData = null;
+    this.issCurrentData = null;
+    this.issTrackData = null;
+    this.currentLocation = LocationService.getLocation();
   }
 
-  /**
+  /** TODO implement splash screen
    * Show loading splash screen
    *
    * params: boolean
@@ -46,7 +49,7 @@ class HomeView {
     }
   }
 
-  /**
+  /** TODO implement component loading
    * Show component loading icon
    *
    * params: HTMLElement, boolean
@@ -63,7 +66,7 @@ class HomeView {
     }
   }
 
-  /**
+  /** TODO implement toggling component views
    * Toggle weather forecast preview expansion
    *
    * params: HTMLElement
@@ -103,17 +106,6 @@ class HomeView {
       .catch(error => console.error(error));
 
     // load earthquake quick view section
-    /*
-    format
-    starttime - def now - 30days
-    endtime - def now
-    latitude
-    longitude
-    maxradiuskm
-    eventid
-    limit
-    orderby - time, time-asc, magnitude, magnitude-asc
-    */
     let startDate = new Date();
     startDate.setDate(startDate.getDate() - 14);
     const geoQuery = {
@@ -122,6 +114,7 @@ class HomeView {
       latitude: this.currentLocation.latitude,
       longitude: this.currentLocation.longitude,
       maxradiuskm: this.maxRadius,
+      eventtype: 'earthquake',
       limit: this.geoLimit,
       jsonerror: true
     };
@@ -138,6 +131,233 @@ class HomeView {
         this.populateGeoPreviewBody(geoData.features);
       })
       .catch(error => console.error(error));
+
+    // load satellite/iss quickview section
+    const overheadQuery = {
+      type: 'above',
+      latitude: this.currentLocation.latitude,
+      longitude: this.currentLocation.longitude,
+      altitude: 0,
+      searchRadius: 15,
+      searchCategory: 0
+    };
+    const timeframe = this.getISSTimeframe();
+    const satelliteFetchData = [
+      this.spaceService.fetchSatelliteData(overheadQuery),
+      this.spaceService.fetchISSTrack(timeframe),
+    ];
+    Promise.all(satelliteFetchData)
+      .then(satData => {
+        this.overheadSatData = satData[0];
+        this.issTrackData = satData[1].Result.Data[1];
+
+        const spaceSection = this._document.getElementById('space');
+
+        spaceSection.append(this.createSpacePreviewHeader());
+        spaceSection.append(this.createSpacePreviewBody());
+
+        this.populateSpacePreviewHeader(this.overheadSatData);
+        this.populateSatelliteQuickview(this.overheadSatData);
+        this.populateISSmap(this.issTrackData);
+      })
+      .catch(error => console.error(error));
+  }
+
+  /**
+   * Create the space quickview header
+   *
+   * params: none
+   *
+   * return: HTMLElement
+   * - HTML header
+  **/
+  createSpacePreviewHeader() {
+    const spacePreviewHeader = this._document.createElement('header');
+    spacePreviewHeader.id = 'space-preview-header';
+    spacePreviewHeader.innerHTML = 'Space';
+    spacePreviewHeader.addEventListener('click', event => {
+      console.log('space clicked');
+      this.togglePreview(this._document.getElementById('space'));
+    });
+
+    const overheadCounter = this._document.createElement('span');
+    overheadCounter.id = 'space-preview-overhead-simple';
+    spacePreviewHeader.append(overheadCounter);
+
+    return spacePreviewHeader;
+  }
+
+  /**
+   * Create the space quickview body
+   *
+   * params: none
+   *
+   * return: HTMLElement
+   * - HTML body for space quickview
+  **/
+  createSpacePreviewBody() {
+    const spacePreviewBody = this._document.createElement('div');
+    spacePreviewBody.id = 'space-preview-body';
+
+    const issMap = this._document.createElement('div');
+    issMap.id = 'iss-map';
+    issMap.style.height = '300px';
+    issMap.style.width = '510px';
+    spacePreviewBody.append(issMap);
+
+    const satelliteQuickview = this._document.createElement('div');
+    satelliteQuickview.id = 'satellite-quickview-container';
+
+    const satelliteQuickviewHeader = this._document.createElement('p');
+    satelliteQuickview.append(satelliteQuickviewHeader);
+
+    const satelliteQuickviewList = this._document.createElement('ul');
+    for (let i=0; i < 3; i++) {
+      const li = this._document.createElement('li');
+      li.className = 'satellite-quickview-list-item';
+      const name = this._document.createElement('p');
+      li.append(name);
+      const span = this._document.createElement('span');
+      li.append(span);
+      satelliteQuickviewList.append(li);
+    }
+    satelliteQuickview.append(satelliteQuickviewList);
+
+    const satelliteQuickviewListMoreButton = this._document.createElement('button');
+    satelliteQuickviewListMoreButton.id = 'show-more-satellites';
+    satelliteQuickviewListMoreButton.addEventListener('click', event => {
+      console.log('show more satellites');
+    });
+
+    spacePreviewBody.append(satelliteQuickview);
+
+    return spacePreviewBody;
+  }
+
+  /**
+   * Get the space section header and update
+   * overhead satellite data
+   *
+   * params: collection
+   * satellites - collection of overhead satellite data objects
+   *
+   * return: none
+  **/
+  populateSpacePreviewHeader(satellites = this.overheadSatData) {
+    const spacePreviewHeaderCounter = this._document.getElementById('space-preview-overhead-simple');
+    spacePreviewHeaderCounter.innerHTML = `Overhead: ${satellites.info.satcount}`;
+  }
+
+  /**
+   * Get the space section body and add quick
+   * overhead satellite stats
+   *
+   * params: collection
+   * satellites - collection of overhead satellite data objects
+   *
+   * return: none
+  **/
+  populateSatelliteQuickview(satellites = this.overheadSatData) {
+    const satelliteQuickview = this._document.getElementById('satellite-quickview-container');
+    const header = satelliteQuickview.children[0];
+    header.innerHTML = `Overhead now: ${satellites.info.satcount}`;
+
+    const list = satelliteQuickview.children[1];
+    const selected = satellites.above;
+    for (let i=0; i < list.children.length && i < selected.length; i++) {
+      const li = list.children[i];
+      const name = li.children[0];
+      const date = li.children[1];
+      name.innerHTML = `${selected[i].satname}`;
+      date.innerHTML = `Launched ${selected[i].launchDate}`;
+    }
+  }
+
+  /**
+   * Get the space section map and create ISS tracking layer
+   *
+   * params: colelction
+   * issPositions - collection of ISS position data objects
+   *
+   * return: none
+  **/
+  populateISSmap(issPositions = this.issTrackData) {
+    // find the closest timeframe, the time index corresponds
+    // to the coordinates array index
+    const _now = new Date();
+    let currentLatlngIndex = 0;
+    const positionTimes = issPositions[0].Time[1];
+    for (let i=0; i < positionTimes.length; i++) {
+      const positionTime = new Date(positionTimes[i][1]);
+      if (Math.abs(_now - positionTime) <= (60 * 1000)) {
+        currentLatlngIndex = i;
+        // if index is near the end of tracks, refresh data and set index to the middle
+        if (i > (positionTimes.length - 30)) {
+          const timeframe = this.getISSTimeframe();
+          this.spaceService.fetchISSTrack(timeframe)
+            .then(updatedTrack => {
+              this.issTrackData = updatedTrack;
+              currentLatlngIndex = updatedTrack[0].Time[1].length / 2;
+            })
+            .catch(error => console.error(error));
+        }
+      }
+    }
+    const trackStartIndex = currentLatlngIndex - 24;
+    const trackEndIndex = currentLatlngIndex + 24;
+    // determine positions for ISS marker offset by client location
+    const positions = issPositions[0].Coordinates[1][0];
+    const currentLatlng = this.getLatLngConversion(currentLatlngIndex, positions);
+    // create ISS icon
+    const issIcon = L.icon({
+      iconUrl: 'assets/icons/iss.png',
+      iconSize: [70, 70]
+    });
+    // generate map
+    const map = L.map('iss-map')
+      .setView([this.currentLocation.latitude, this.currentLocation.longitude], 0)
+      .setMaxBounds([
+        [-90, (this.currentLocation.longitude - 180)],
+        [90, (this.currentLocation.longitude + 180)]
+      ]);
+    L.esri.basemapLayer('Imagery', {nowrap: true}).addTo(map);
+    L.marker([currentLatlng.latitude, currentLatlng.longitude], {icon: issIcon}).addTo(map);
+    L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(map);
+    const pastTrack = this.generatePolylineLatLng(trackStartIndex, currentLatlngIndex, positions);
+    const futureTrack = this.generatePolylineLatLng(currentLatlngIndex, trackEndIndex, positions);
+    console.log(pastTrack, futureTrack);
+    L.polyline(pastTrack, {color: 'yellow'}).addTo(map);
+    L.polyline(futureTrack, {color: 'white'}).addTo(map);
+  }
+
+  getLatLngConversion(index, positions) {
+    let offsetLong = positions.Longitude[1][index];
+    offsetLong = (offsetLong < 180) ? offsetLong: offsetLong - 360;
+    return {
+      latitude: positions.Latitude[1][index],
+      longitude: (offsetLong < (180 + this.currentLocation.longitude)) ? offsetLong: offsetLong - 360
+    };
+  }
+
+  generatePolylineLatLng(start, end, positions) {
+    let isBeforeBreak = true;
+    let lastLong = 0;
+    const preBreakTrack = [];
+    const postBreakTrack = [];
+    for (let i=start; i < end; i++) {
+      const converted = this.getLatLngConversion(i, positions);
+      if (lastLong > 0 && converted.longitude < 0) {
+        isBeforeBreak = false;
+      }
+      lastLong = converted.longitude;
+      if (isBeforeBreak) {
+        preBreakTrack.push([converted.latitude, converted.longitude]);
+      } else {
+        postBreakTrack.push([converted.latitude, converted.longitude]);
+      }
+    }
+    const track = [preBreakTrack, postBreakTrack];
+    return track;
   }
 
   /**
@@ -152,7 +372,7 @@ class HomeView {
   populateGeoPreviewBody(geoData = this.geoData) {
     const started = this.startTime;
     const map = L.map('earthquake-preview-map').setView([this.currentLocation.latitude, this.currentLocation.longitude], 9);
-    L.esri.basemapLayer("Topographic").addTo(map);
+    L.esri.basemapLayer('Topographic').addTo(map);
     const quakeLayer = L.geoJSON(geoData, {
       pointToLayer: function (feature, latlng) {
         let r = 255;
@@ -536,5 +756,21 @@ class HomeView {
     const datetime = new Date(day);
     const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     return weekdays[datetime.getDay()];
+  }
+
+  /**
+   * Set the start and end ISO strings to fetch ISS position tracks
+   *
+   * params: none
+   *
+   * return: object
+   * - object with start and end ISO string timestamps
+  **/
+  getISSTimeframe() {
+    const start = new Date();
+    start.setHours(start.getHours() - 3);
+    const end = new Date();
+    end.setHours(end.getHours() + 3);
+    return {start: start.toISOString(), end: end.toISOString()};
   }
 }
