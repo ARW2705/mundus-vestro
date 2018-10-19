@@ -6,18 +6,6 @@
 
 class WeatherService {
   /**
-   * Weather API base URL
-   *
-   * params: none
-   *
-   * return: string
-   * - darksky.net domain
-  **/
-  static get WEATHER_API_BASE_URL() {
-    return 'https://api.darksky.net';
-  }
-
-  /**
    * API key
    *
    * params: none
@@ -27,6 +15,18 @@ class WeatherService {
   **/
   static get API_KEY() {
     return WEATHER_API_KEY;
+  }
+
+  /**
+   * Weather API base URL
+   *
+   * params: none
+   *
+   * return: string
+   * - darksky.net domain
+  **/
+  static get WEATHER_API_BASE_URL() {
+    return 'https://api.darksky.net';
   }
 
   /**
@@ -52,7 +52,7 @@ class WeatherService {
    * - Promise with weather data or error message
    **/
   fetchForecast(query) {
-    const proxy = 'https://cors-anywhere.herokuapp.com/';
+    const proxy = HTTPS_PROXY;
     return fetch(proxy + this.createCompleteURL(query))
       .then(res => {
         return res.json()
