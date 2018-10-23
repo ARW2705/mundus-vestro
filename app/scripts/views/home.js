@@ -28,10 +28,11 @@ class HomeView {
     this.geoLimit = 25;
     this.spaceService = SpaceService;
     this.overheadSatData = null;
+    this.issPositionData = null;
     this.issTrackData = null;
     this.currentLocation = LocationService.getLocation();
     this.issInterval = null;
-    this.issCurrentLocationIndex = 0;
+    this.issCurrentLocationIndex = null;
     this.issMarker = null;
     this.issFullPastPolyline = null;
     this.issFullFuturePolyline = null;
@@ -40,6 +41,9 @@ class HomeView {
     this.issIcon = null;
     this.issMap = null;
     this.issCurrentTrackEndIndex = 0;
+    this.isISSMapLoaded = false;
+    this.eastBoundary = null;
+    this.westBoundary = null;
   }
 
   /** TODO implement splash screen
@@ -158,7 +162,7 @@ class HomeView {
     Promise.all(satelliteFetchData)
       .then(satData => {
         this.overheadSatData = satData[0];
-        this.issTrackData = satData[1].Result.Data[1];
+        this.issPositionData = satData[1].Result.Data[1];
 
         const spaceSection = this._document.getElementById('space');
 
@@ -167,7 +171,7 @@ class HomeView {
 
         this.populateSpacePreviewHeader(this.overheadSatData);
         this.populateSatelliteQuickview(this.overheadSatData);
-        this.populateISSmap(this.issTrackData);
+        this.populateISSmap(this.issPositionData);
       })
       .catch(error => console.error(error));
   }
@@ -290,84 +294,67 @@ class HomeView {
    *
    * return: none
   **/
-  populateISSmap(issPositions = this.issTrackData) {
-    // find the closest timeframe, the time index corresponds
-    // to the coordinates array index
-    const westBoundary = this.currentLocation.longitude - 180;
-    const eastBoundary = this.currentLocation.longitude + 180;
-    const _now = new Date();
-    let currentLatlngIndex = 0;
-    const positionTimes = issPositions[0].Time[1];
-    /*
-      keep track of last screen break index
-      once current is found, compate with screen break index
-      get progress of that track to determine full beginning and end
-    */
-    for (let i=115; i < 126; i++) {
-      const positionTime = new Date(positionTimes[i][1]);
-      if (Math.abs(_now - positionTime) <= (60 * 1000)) {
-        currentLatlngIndex = i;
-        this.issCurrentLocationIndex = i;
-      }
-    }
-
-    // determine positions for ISS marker offset by client location
-    const positions = issPositions[0].Coordinates[1][0];
-    const finalLong = this.getConvertedLongitude(positions.Longitude[1][currentLatlngIndex]);
-    const finalLat = positions.Latitude[1][currentLatlngIndex];
-
-    const trackProgress = this.getCurrentTrack(currentLatlngIndex, null, null, westBoundary, eastBoundary, positions.Longitude[1]);
-
-    const previousTrackProgress = this.getCurrentTrack(trackProgress.current - 60, null, trackProgress.end, westBoundary, eastBoundary, positions.Longitude[1]);
-    const nextTrackProgress = this.getCurrentTrack(trackProgress.current + 60, trackProgress.start, null, westBoundary, eastBoundary, positions.Longitude[1]);
-
-    const indexTrack = this.getTrack(currentLatlngIndex, null, null, westBoundary, eastBoundary, positions.Longitude[1]);
-    const startTrack = this.getTrack(null, indexTrack.end + 1, null, westBoundary, eastBoundary, positions.Longitude[1]);
-    const endTrack = this.getTrack(null, null, indexTrack.start - 1, westBoundary, eastBoundary, positions.Longitude[1]);
-
-    // const currentOrbitPath = this.parseOrbitCoordinates(trackProgress, issPositions[0].Coordinates[1][0]);
-    // const nextOrbitPath = this.parseOrbitCoordinates(nextTrackProgress, issPositions[0].Coordinates[1][0]);
-    // const previousOrbitPath = this.parseOrbitCoordinates(previousTrackProgress, issPositions[0].Coordinates[1][0]);
-
+  populateISSmap(issPositions = this.issPositionData) {
+    this.westBoundary = this.currentLocation.longitude - 180;
+    this.eastBoundary = this.currentLocation.longitude + 180;
 
     // create ISS icon
     this.issIcon = L.icon({
       iconUrl: 'assets/icons/iss.png',
       iconSize: [70, 70]
     });
+
     // generate map
     this.issMap = L.map('iss-map')
       .setView([0, this.currentLocation.longitude], 0)
       .setMaxBounds([
-        [-90, westBoundary],
-        [90, eastBoundary]
+        [-90, this.westBoundary],
+        [90, this.eastBoundary]
       ]);
     L.esri.basemapLayer('Imagery', {nowrap: true}).addTo(this.issMap);
 
-    this.issMarker = L.marker([finalLat, finalLong], {icon: this.issIcon}).addTo(this.issMap);
-    L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(this.issMap);
-
-    const fullFutureTrack = this.generatePolylineLatLng(startTrack.start, startTrack.end, positions);
-    const fullPastTrack = this.generatePolylineLatLng(endTrack.start, endTrack.end, positions);
-    const pastOfCurrentTrack = this.generatePolylineLatLng(indexTrack.start, currentLatlngIndex + 1, positions);
-    const futureOfCurrentTrack = this.generatePolylineLatLng(currentLatlngIndex, indexTrack.end, positions);
-
-    this.issFullPastPolyline = L.polyline(fullPastTrack, {color: 'red'}).addTo(this.issMap);
-    this.issPartialPastPolyline = L.polyline(pastOfCurrentTrack, {color: 'yellow'}).addTo(this.issMap);
-    this.issPartialFuturePolyline = L.polyline(futureOfCurrentTrack, {color: 'white'}).addTo(this.issMap);
-    this.issFullFuturePolyline = L.polyline(fullFutureTrack, {color: 'blue'}).addTo(this.issMap);
+    this.updateISSMapOverlays(this.generateISSTracks(issPositions));
 
     this.issInterval = setInterval(() => {
-      if (this.issCurrentLocationIndex >= this.issCurrentTrackEndIndex) {
+      console.log('Updating ISS');
+      this.issCurrentLocationIndex++;
+      if (this.issCurrentLocationIndex > this.issCurrentTrackEndIndex) {
+        console.log(this.issCurrentLocationIndex, this.issCurrentTrackEndIndex);
         this.generateNewISSTracks();
       }
-      this.issCurrentLocationIndex++;
-      this.updateISSMarker();
+      this.updateISSMapOverlays(this.generateISSTracks(this.issPositionData));
     }, (2 * 60 * 1000));
   }
 
-  parseOrbitCoordinates(track, positions) {
-    // console.log(track, positions);
+  updateISSMapOverlays(trackData) {
+    const positions = this.issPositionData[0].Coordinates[1][0];
+
+    if (this.issMarker == null) {
+      this.issMarker = L.marker(trackData.markerLatLng, {icon: this.issIcon}).addTo(this.issMap);
+      L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(this.issMap);
+    } else {
+      const newMarker = L.marker(trackData.nextLatLng, {icon: this.issIcon});
+      this.issMap.removeLayer(this.issMarker);
+      this.issMarker = newMarker;
+      newMarker.addTo(this.issMap);
+    }
+
+    if (this.issFullPastPolyline == null
+        || this.issPartialPastPolyline == null
+        || this.issPartialFuturePolyline == null
+        || this.issFullFuturePolyline == null) {
+      const fullFuturePath = this.generatePolylineLatLng(trackData.startTrack.start, trackData.startTrack.end, positions);
+      const fullPastPath = this.generatePolylineLatLng(trackData.endTrack.start, trackData.endTrack.end, positions);
+      const pastOfCurrentPath = this.generatePolylineLatLng(trackData.indexTrack.start, this.issCurrentLocationIndex + 1, positions);
+      const futureOfCurrentPath = this.generatePolylineLatLng(this.issCurrentLocationIndex, trackData.indexTrack.end, positions);
+
+      this.issFullPastPolyline = L.polyline(fullPastPath, {color: 'red'}).addTo(this.issMap);
+      this.issPartialPastPolyline = L.polyline(pastOfCurrentPath, {color: 'yellow'}).addTo(this.issMap);
+      this.issPartialFuturePolyline = L.polyline(futureOfCurrentPath, {color: 'white'}).addTo(this.issMap);
+      this.issFullFuturePolyline = L.polyline(fullFuturePath, {color: 'blue'}).addTo(this.issMap);
+    } else {
+      L.polyline([trackData.previousLatLng, trackData.nextLatLng], {color: 'yellow'}).addTo(this.issMap);
+    }
   }
 
   generateNewISSTracks() {
@@ -375,24 +362,72 @@ class HomeView {
     const timeframe = this.getISSTimeframe();
     this.spaceService.fetchISSTrack(timeframe)
       .then(issTrack => {
-        this.issTrackData = issTrack.Result.Data[1];
-        this.generateISSTracks();
+        this.issPositionData = issTrack.Result.Data[1];
+        this.clearISSLayers();
+        this.updateISSMapOverlays(this.generateISSTracks(issTrack.Result.Data[1]));
       })
       .catch(error => console.error(error));
   }
 
-  generateISSTracks() {
+  clearISSLayers() {
+    this.issMap.removeLayer(this.issMarker);
+    this.issMap.removeLayer(this.issFullPastPolyline);
+    this.issMap.removeLayer(this.issFullFuturePolyline);
+    this.issMap.removeLayer(this.issPartialPastPolyline);
+    this.issMap.removeLayer(this.issPartialFuturePolyline);
+    this.issMarker = null;
+    this.issFullPastPolyline = null;
+    this.issFullFuturePolyline = null;
+    this.issPartialPastPolyline = null;
+    this.issPartialFuturePolyline = null;
+  }
 
+  generateISSTracks(issPositions = this.issPositionData) {
+    // find and set iss current location by its time index
+    if (this.issCurrentLocationIndex == null) {
+      const _now = new Date();
+      const positionTimes = issPositions[0].Time[1];
+      for (let i=115; i < 126; i++) {
+        const positionTime = new Date(positionTimes[i][1]);
+        if (Math.abs(_now - positionTime) <= (60 * 1000)) {
+          this.issCurrentLocationIndex = i;
+        }
+      }
+    }
+
+    // determine positions for ISS marker offset by client location
+    const positions = issPositions[0].Coordinates[1][0];
+
+    const indexTrack = this.getTrack(this.issCurrentLocationIndex, null, null, this.westBoundary, this.eastBoundary, positions.Longitude[1]);
+    const startTrack = this.getTrack(null, indexTrack.end + 1, null, this.westBoundary, this.eastBoundary, positions.Longitude[1]);
+    const endTrack = this.getTrack(null, null, indexTrack.start - 1, this.westBoundary, this.eastBoundary, positions.Longitude[1]);
+
+    const markerLong = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex]);
+    const markerLat = positions.Latitude[1][this.issCurrentLocationIndex];
+    const previousLat = positions.Latitude[1][this.issCurrentLocationIndex - 1];
+    const previousLong = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex - 1]);
+    const nextLat = positions.Latitude[1][this.issCurrentLocationIndex];
+    const nextLong = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex]);
+
+    return {
+      indexTrack: indexTrack,
+      startTrack: startTrack,
+      endTrack: endTrack,
+      markerLatLng: [markerLat, markerLong],
+      previousLatLng: [previousLat, previousLong],
+      nextLatLng: [nextLat, nextLong]
+    };
   }
 
   getTrack(index, start = null, end = null, westBoundary, eastBoundary, positions) {
-    console.log(`E: ${eastBoundary}, W: ${westBoundary}`);
     const errorMargin = 10;
     let _start = (start == null) ? 0: start;
     let _end = (end == null) ? positions.length - 1: end;
     let foundStart = false;
     let foundEnd = false;
     let foundMid = false;
+    const startedFromWest = positions[index] > eastBoundary;
+    let nearEast = false;
     for (let i=0; i < 60; i++) {
       if (start != null) {
         // have start, go forward until positions[i] > eastBoundary
@@ -423,60 +458,15 @@ class HomeView {
         }
         if (!foundEnd) {
           if (positions[index + i] > eastBoundary && positions[index + i] < eastBoundary + errorMargin) {
+            console.log('found end', i, positions[index + i]);
             _end = index + i - 1;
             foundEnd = true;
           }
         }
       }
     }
-    console.log(`With ${index}, ${start}, ${end} I found start:${_start}, end:${_end}`);
+    console.log(`With ${index}, ${start}, ${end} - generated ${_start} - ${_end}`);
     return {start: _start, end: _end};
-  }
-
-  getCurrentTrack(index, start = null, end = null, westBoundary, eastBoundary, positions) {
-    let startLong = (start != null) ? start + 1: index;
-    let endLong = (end != null) ? end - 1: index;
-    // console.log('get track', index, start, end, startLong, endLong);
-
-    const startedFromWest = positions[index] > eastBoundary;
-    let nearEast = false;
-
-    for (let i=0; i < 60; i++) {
-      if (end == null || startedFromWest && !nearEast) {
-        if (positions[index + i] > eastBoundary) {
-          continue;
-        } else {
-          nearEast = true;
-        }
-      }
-      if (start == null || positions[index + i] > eastBoundary) {
-        endLong = index + i - 1;
-        for (let j=(endLong - 45); j > (endLong - 60); j--) {
-          if (positions[j] < eastBoundary) {
-            startLong = j + 1;
-            break;
-          }
-        }
-        break;
-      }
-    }
-    // console.log(`start index: ${startLong} = ${this.getConvertedLongitude(positions[startLong])}, end index: ${endLong} = ${this.getConvertedLongitude(positions[endLong])}`);
-    return {start: startLong, end: endLong, current: index};
-  }
-
-  updateISSMarker() {
-    const positions = this.issTrackData[0].Coordinates[1][0];
-    const previousLat = positions.Latitude[1][this.issCurrentLocationIndex - 1];
-    const previousLong = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex - 1]);
-    const lat = positions.Latitude[1][this.issCurrentLocationIndex];
-    const long = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex]);
-
-    const newMarker = L.marker([lat, long], {icon: this.issIcon});
-    this.issMap.removeLayer(this.issMarker);
-    this.issMarker = newMarker;
-    newMarker.addTo(this.issMap);
-
-    L.polyline([[previousLat, previousLong], [lat, long]], {color: 'yellow'}).addTo(this.issMap);
   }
 
   getConvertedLongitude(longitude) {
@@ -484,7 +474,7 @@ class HomeView {
     return (offsetLong < (180 + this.currentLocation.longitude)) ? offsetLong: offsetLong - 360;
   }
 
-  generatePolylineLatLng(start, end, positions = this.issTrackData[0].Coordinates[1][0]) {
+  generatePolylineLatLng(start, end, positions = this.issPositionData[0].Coordinates[1][0]) {
     let isBeforeBreak = true;
     let lastLong = 0;
     const preBreakTrack = [];
@@ -920,7 +910,7 @@ class HomeView {
     const start = new Date();
     start.setHours(start.getHours() - 4);
     const end = new Date();
-    end.setHours(end.getHours() + 6);
+    end.setHours(end.getHours() + 4);
     return {start: start.toISOString(), end: end.toISOString()};
   }
 }
