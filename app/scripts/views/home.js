@@ -23,14 +23,23 @@ class HomeView {
     this.weatherPreviewExtendedTotal = 5;
     this.geoService = GeoService;
     this.geoData = null;
-    this.startTime = 1000 * 60 * 60 * 24 * 14;
+    this.startTime = 14 * 24 * 60 * 60 * 1000;
     this.maxRadius = 100;
     this.geoLimit = 25;
     this.spaceService = SpaceService;
     this.overheadSatData = null;
-    this.issCurrentData = null;
     this.issTrackData = null;
     this.currentLocation = LocationService.getLocation();
+    this.issInterval = null;
+    this.issCurrentLocationIndex = 0;
+    this.issMarker = null;
+    this.issFullPastPolyline = null;
+    this.issFullFuturePolyline = null;
+    this.issPartialPastPolyline = null;
+    this.issPartialFuturePolyline = null;
+    this.issIcon = null;
+    this.issMap = null;
+    this.issCurrentTrackEndIndex = 0;
   }
 
   /** TODO implement splash screen
@@ -202,7 +211,7 @@ class HomeView {
     const issMap = this._document.createElement('div');
     issMap.id = 'iss-map';
     issMap.style.height = '300px';
-    issMap.style.width = '510px';
+    issMap.style.width = '500px';
     spacePreviewBody.append(issMap);
 
     const satelliteQuickview = this._document.createElement('div');
@@ -284,77 +293,218 @@ class HomeView {
   populateISSmap(issPositions = this.issTrackData) {
     // find the closest timeframe, the time index corresponds
     // to the coordinates array index
+    const westBoundary = this.currentLocation.longitude - 180;
+    const eastBoundary = this.currentLocation.longitude + 180;
     const _now = new Date();
     let currentLatlngIndex = 0;
     const positionTimes = issPositions[0].Time[1];
-    for (let i=0; i < positionTimes.length; i++) {
+    /*
+      keep track of last screen break index
+      once current is found, compate with screen break index
+      get progress of that track to determine full beginning and end
+    */
+    for (let i=115; i < 126; i++) {
       const positionTime = new Date(positionTimes[i][1]);
       if (Math.abs(_now - positionTime) <= (60 * 1000)) {
         currentLatlngIndex = i;
-        // if index is near the end of tracks, refresh data and set index to the middle
-        if (i > (positionTimes.length - 30)) {
-          const timeframe = this.getISSTimeframe();
-          this.spaceService.fetchISSTrack(timeframe)
-            .then(updatedTrack => {
-              this.issTrackData = updatedTrack;
-              currentLatlngIndex = updatedTrack[0].Time[1].length / 2;
-            })
-            .catch(error => console.error(error));
-        }
+        this.issCurrentLocationIndex = i;
       }
     }
-    const trackStartIndex = currentLatlngIndex - 24;
-    const trackEndIndex = currentLatlngIndex + 24;
+
     // determine positions for ISS marker offset by client location
     const positions = issPositions[0].Coordinates[1][0];
-    const currentLatlng = this.getLatLngConversion(currentLatlngIndex, positions);
+    const finalLong = this.getConvertedLongitude(positions.Longitude[1][currentLatlngIndex]);
+    const finalLat = positions.Latitude[1][currentLatlngIndex];
+
+    const trackProgress = this.getCurrentTrack(currentLatlngIndex, null, null, westBoundary, eastBoundary, positions.Longitude[1]);
+
+    const previousTrackProgress = this.getCurrentTrack(trackProgress.current - 60, null, trackProgress.end, westBoundary, eastBoundary, positions.Longitude[1]);
+    const nextTrackProgress = this.getCurrentTrack(trackProgress.current + 60, trackProgress.start, null, westBoundary, eastBoundary, positions.Longitude[1]);
+
+    const indexTrack = this.getTrack(currentLatlngIndex, null, null, westBoundary, eastBoundary, positions.Longitude[1]);
+    const startTrack = this.getTrack(null, indexTrack.end + 1, null, westBoundary, eastBoundary, positions.Longitude[1]);
+    const endTrack = this.getTrack(null, null, indexTrack.start - 1, westBoundary, eastBoundary, positions.Longitude[1]);
+
+    // const currentOrbitPath = this.parseOrbitCoordinates(trackProgress, issPositions[0].Coordinates[1][0]);
+    // const nextOrbitPath = this.parseOrbitCoordinates(nextTrackProgress, issPositions[0].Coordinates[1][0]);
+    // const previousOrbitPath = this.parseOrbitCoordinates(previousTrackProgress, issPositions[0].Coordinates[1][0]);
+
+
     // create ISS icon
-    const issIcon = L.icon({
+    this.issIcon = L.icon({
       iconUrl: 'assets/icons/iss.png',
       iconSize: [70, 70]
     });
     // generate map
-    const map = L.map('iss-map')
-      .setView([this.currentLocation.latitude, this.currentLocation.longitude], 0)
+    this.issMap = L.map('iss-map')
+      .setView([0, this.currentLocation.longitude], 0)
       .setMaxBounds([
-        [-90, (this.currentLocation.longitude - 180)],
-        [90, (this.currentLocation.longitude + 180)]
+        [-90, westBoundary],
+        [90, eastBoundary]
       ]);
-    L.esri.basemapLayer('Imagery', {nowrap: true}).addTo(map);
-    L.marker([currentLatlng.latitude, currentLatlng.longitude], {icon: issIcon}).addTo(map);
-    L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(map);
-    const pastTrack = this.generatePolylineLatLng(trackStartIndex, currentLatlngIndex, positions);
-    const futureTrack = this.generatePolylineLatLng(currentLatlngIndex, trackEndIndex, positions);
-    console.log(pastTrack, futureTrack);
-    L.polyline(pastTrack, {color: 'yellow'}).addTo(map);
-    L.polyline(futureTrack, {color: 'white'}).addTo(map);
+    L.esri.basemapLayer('Imagery', {nowrap: true}).addTo(this.issMap);
+
+    this.issMarker = L.marker([finalLat, finalLong], {icon: this.issIcon}).addTo(this.issMap);
+    L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(this.issMap);
+
+    const fullFutureTrack = this.generatePolylineLatLng(startTrack.start, startTrack.end, positions);
+    const fullPastTrack = this.generatePolylineLatLng(endTrack.start, endTrack.end, positions);
+    const pastOfCurrentTrack = this.generatePolylineLatLng(indexTrack.start, currentLatlngIndex + 1, positions);
+    const futureOfCurrentTrack = this.generatePolylineLatLng(currentLatlngIndex, indexTrack.end, positions);
+
+    this.issFullPastPolyline = L.polyline(fullPastTrack, {color: 'red'}).addTo(this.issMap);
+    this.issPartialPastPolyline = L.polyline(pastOfCurrentTrack, {color: 'yellow'}).addTo(this.issMap);
+    this.issPartialFuturePolyline = L.polyline(futureOfCurrentTrack, {color: 'white'}).addTo(this.issMap);
+    this.issFullFuturePolyline = L.polyline(fullFutureTrack, {color: 'blue'}).addTo(this.issMap);
+
+    this.issInterval = setInterval(() => {
+      if (this.issCurrentLocationIndex >= this.issCurrentTrackEndIndex) {
+        this.generateNewISSTracks();
+      }
+      this.issCurrentLocationIndex++;
+      this.updateISSMarker();
+    }, (2 * 60 * 1000));
   }
 
-  getLatLngConversion(index, positions) {
-    let offsetLong = positions.Longitude[1][index];
-    offsetLong = (offsetLong < 180) ? offsetLong: offsetLong - 360;
-    return {
-      latitude: positions.Latitude[1][index],
-      longitude: (offsetLong < (180 + this.currentLocation.longitude)) ? offsetLong: offsetLong - 360
-    };
+  parseOrbitCoordinates(track, positions) {
+    // console.log(track, positions);
   }
 
-  generatePolylineLatLng(start, end, positions) {
+  generateNewISSTracks() {
+    console.log('near track data end, fetching new data');
+    const timeframe = this.getISSTimeframe();
+    this.spaceService.fetchISSTrack(timeframe)
+      .then(issTrack => {
+        this.issTrackData = issTrack.Result.Data[1];
+        this.generateISSTracks();
+      })
+      .catch(error => console.error(error));
+  }
+
+  generateISSTracks() {
+
+  }
+
+  getTrack(index, start = null, end = null, westBoundary, eastBoundary, positions) {
+    console.log(`E: ${eastBoundary}, W: ${westBoundary}`);
+    const errorMargin = 10;
+    let _start = (start == null) ? 0: start;
+    let _end = (end == null) ? positions.length - 1: end;
+    let foundStart = false;
+    let foundEnd = false;
+    let foundMid = false;
+    for (let i=0; i < 60; i++) {
+      if (start != null) {
+        // have start, go forward until positions[i] > eastBoundary
+        if (positions[start + i] < eastBoundary) {
+          foundMid = true;
+        }
+        if (foundMid && positions[start + i] > eastBoundary && positions[start + i] < eastBoundary + errorMargin) {
+          _end = start + i - 1;
+          this.issCurrentTrackEndIndex = _end;
+          break;
+        }
+      } else if (end != null) {
+        // have end, go back until positions[j]
+        if (positions[end - i] > eastBoundary) {
+          foundMid = true;
+        }
+        if (foundMid && positions[end - i] < eastBoundary && positions[end - i] < eastBoundary + errorMargin) {
+          _start = end - i;
+          break;
+        }
+      } else {
+        // have somewhere in middle, go both directions to find start and end
+        if (!foundStart) {
+          if (positions[index - i] > eastBoundary && positions[index - i] < eastBoundary + errorMargin) {
+            _start = index - i;
+            foundStart = true;
+          }
+        }
+        if (!foundEnd) {
+          if (positions[index + i] > eastBoundary && positions[index + i] < eastBoundary + errorMargin) {
+            _end = index + i - 1;
+            foundEnd = true;
+          }
+        }
+      }
+    }
+    console.log(`With ${index}, ${start}, ${end} I found start:${_start}, end:${_end}`);
+    return {start: _start, end: _end};
+  }
+
+  getCurrentTrack(index, start = null, end = null, westBoundary, eastBoundary, positions) {
+    let startLong = (start != null) ? start + 1: index;
+    let endLong = (end != null) ? end - 1: index;
+    // console.log('get track', index, start, end, startLong, endLong);
+
+    const startedFromWest = positions[index] > eastBoundary;
+    let nearEast = false;
+
+    for (let i=0; i < 60; i++) {
+      if (end == null || startedFromWest && !nearEast) {
+        if (positions[index + i] > eastBoundary) {
+          continue;
+        } else {
+          nearEast = true;
+        }
+      }
+      if (start == null || positions[index + i] > eastBoundary) {
+        endLong = index + i - 1;
+        for (let j=(endLong - 45); j > (endLong - 60); j--) {
+          if (positions[j] < eastBoundary) {
+            startLong = j + 1;
+            break;
+          }
+        }
+        break;
+      }
+    }
+    // console.log(`start index: ${startLong} = ${this.getConvertedLongitude(positions[startLong])}, end index: ${endLong} = ${this.getConvertedLongitude(positions[endLong])}`);
+    return {start: startLong, end: endLong, current: index};
+  }
+
+  updateISSMarker() {
+    const positions = this.issTrackData[0].Coordinates[1][0];
+    const previousLat = positions.Latitude[1][this.issCurrentLocationIndex - 1];
+    const previousLong = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex - 1]);
+    const lat = positions.Latitude[1][this.issCurrentLocationIndex];
+    const long = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex]);
+
+    const newMarker = L.marker([lat, long], {icon: this.issIcon});
+    this.issMap.removeLayer(this.issMarker);
+    this.issMarker = newMarker;
+    newMarker.addTo(this.issMap);
+
+    L.polyline([[previousLat, previousLong], [lat, long]], {color: 'yellow'}).addTo(this.issMap);
+  }
+
+  getConvertedLongitude(longitude) {
+    const offsetLong = (longitude < 180) ? longitude: longitude - 360;
+    return (offsetLong < (180 + this.currentLocation.longitude)) ? offsetLong: offsetLong - 360;
+  }
+
+  generatePolylineLatLng(start, end, positions = this.issTrackData[0].Coordinates[1][0]) {
     let isBeforeBreak = true;
     let lastLong = 0;
     const preBreakTrack = [];
     const postBreakTrack = [];
     for (let i=start; i < end; i++) {
-      const converted = this.getLatLngConversion(i, positions);
-      if (lastLong > 0 && converted.longitude < 0) {
+      const _long = positions.Longitude[1][i];
+      const _lat = positions.Latitude[1][i];
+      const convertedLong = this.getConvertedLongitude(_long);
+      if (lastLong > 0 && convertedLong < 0) {
         isBeforeBreak = false;
       }
-      lastLong = converted.longitude;
+      lastLong = convertedLong;
       if (isBeforeBreak) {
-        preBreakTrack.push([converted.latitude, converted.longitude]);
+        preBreakTrack.push([_lat, convertedLong]);
       } else {
-        postBreakTrack.push([converted.latitude, converted.longitude]);
+        postBreakTrack.push([_lat, convertedLong]);
       }
+    }
+    for (let postExtension=end - 1; postExtension < end + 2; postExtension++) {
+      postBreakTrack.push([positions.Latitude[1][postExtension], positions.Longitude[1][postExtension]]);
     }
     const track = [preBreakTrack, postBreakTrack];
     return track;
@@ -768,9 +918,9 @@ class HomeView {
   **/
   getISSTimeframe() {
     const start = new Date();
-    start.setHours(start.getHours() - 3);
+    start.setHours(start.getHours() - 4);
     const end = new Date();
-    end.setHours(end.getHours() + 3);
+    end.setHours(end.getHours() + 6);
     return {start: start.toISOString(), end: end.toISOString()};
   }
 }
