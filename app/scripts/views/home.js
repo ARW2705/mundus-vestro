@@ -14,36 +14,29 @@ class HomeView {
     LocationService,
     WeatherService,
     GeoService,
-    SpaceService
+    SpaceService,
+    ISSTrackerComponent
   ) {
     this._document = _document;
     this.locationService = LocationService;
     this.weatherService = WeatherService;
+    this.currentLocation = LocationService.getLocation();
+    this.currentBoundaries = LocationService.getBoundaries();
     this.weather = null;
     this.weatherPreviewExtendedTotal = 5;
     this.geoService = GeoService;
     this.geoData = null;
+    this.geoMapLoadEvent = true;
     this.startTime = 14 * 24 * 60 * 60 * 1000;
     this.maxRadius = 100;
     this.geoLimit = 25;
+    this.geoMapLocation = null;
+    this.quakeLayer = null;
     this.spaceService = SpaceService;
+    this.issTracker = ISSTrackerComponent;
     this.overheadSatData = null;
-    this.issPositionData = null;
-    this.issTrackData = null;
-    this.currentLocation = LocationService.getLocation();
-    this.issInterval = null;
-    this.issCurrentLocationIndex = null;
-    this.issMarker = null;
-    this.issFullPastPolyline = null;
-    this.issFullFuturePolyline = null;
-    this.issPartialPastPolyline = null;
-    this.issPartialFuturePolyline = null;
-    this.issIcon = null;
+    this.satelliteListStart = 0;
     this.issMap = null;
-    this.issCurrentTrackEndIndex = 0;
-    this.isISSMapLoaded = false;
-    this.eastBoundary = null;
-    this.westBoundary = null;
   }
 
   /** TODO implement splash screen
@@ -62,24 +55,7 @@ class HomeView {
     }
   }
 
-  /** TODO implement component loading
-   * Show component loading icon
-   *
-   * params: HTMLElement, boolean
-   * element - content section
-   * show - show component loading icon if true, hide if false
-   *
-   * return: none
-  **/
-  showElementLoading(element, show) {
-    if (show) {
-      // Show element loading
-    } else {
-      // Show element, hide loading
-    }
-  }
-
-  /** TODO implement toggling component views
+  /**
    * Toggle weather forecast preview expansion
    *
    * params: HTMLElement
@@ -88,10 +64,30 @@ class HomeView {
    * return: none
   **/
   togglePreview(section) {
-    const header = section.children[0];
     const body = section.children[1];
+    if (body.style.left == '0px') {
+      body.style.left = '-999em';
+      body.style.height = '0';
+    } else {
+      body.style.left = '0';
+      body.style.height = 'auto';
+    }
+  }
 
-    console.log('toggled', section, header, body);
+  /**
+   * Toggle loading spinner in selected preview header
+   *
+   * params: HTMLElement
+   * icon - the particular spinner icon to toggle
+   *
+   * return: none
+  **/
+  toggleLoadingSpinner(icon) {
+    if (icon.style.display == 'none') {
+      icon.style.display = 'inline-block';
+    } else {
+      icon.style.display = 'none';
+    }
   }
 
   /**
@@ -104,15 +100,23 @@ class HomeView {
   loadContent() {
     this.showLoadingScreen(true);
 
+    const weatherSection = this._document.getElementById('weather');
+    weatherSection.append(this.createWeatherPreviewHeader());
+
+    const earthSection = this._document.getElementById('earth');
+    earthSection.append(this.createGeoPreviewHeader());
+
+    const spaceSection = this._document.getElementById('space');
+    spaceSection.append(this.createSpacePreviewHeader());
+
     // load weather forecast section
     this.weatherService.fetchForecastPreview(this.currentLocation)
       .then(weather => {
         this.weather = weather;
-        const weatherSection = this._document.getElementById('atmosphere');
 
-        weatherSection.append(this.createWeatherPreviewHeader());
         weatherSection.append(this.createWeatherPreviewBody());
 
+        this.toggleLoadingSpinner(this._document.getElementById('forecast-preview-header').children[2]);
         this.populateWeatherPreviewHeader(weather);
         this.populateWeatherPreviewBody(weather);
       })
@@ -134,13 +138,12 @@ class HomeView {
     this.geoService.fetchGeoData(geoQuery)
       .then(geoData => {
         this.geoData = geoData.features;
+        this.geoMapLocation = this.currentLocation;
 
-        const earthSection = this._document.getElementById('earth');
-
-        earthSection.append(this.createGeoPreviewHeader());
         earthSection.append(this.createGeoPreviewBody());
 
-        // this.populateGeoPreviewHeader(geoData.features);
+        this.toggleLoadingSpinner(this._document.getElementById('earthquake-preview-header').children[1]);
+        this.populateGeoPreviewHeader(geoData.features);
         this.populateGeoPreviewBody(geoData.features);
       })
       .catch(error => console.error(error));
@@ -154,24 +157,15 @@ class HomeView {
       searchRadius: 15,
       searchCategory: 0
     };
-    const timeframe = this.getISSTimeframe();
-    const satelliteFetchData = [
-      this.spaceService.fetchSatelliteData(overheadQuery),
-      this.spaceService.fetchISSTrack(timeframe),
-    ];
-    Promise.all(satelliteFetchData)
+    this.spaceService.fetchSatelliteData(overheadQuery)
       .then(satData => {
-        this.overheadSatData = satData[0];
-        this.issPositionData = satData[1].Result.Data[1];
+        this.overheadSatData = satData;
 
-        const spaceSection = this._document.getElementById('space');
-
-        spaceSection.append(this.createSpacePreviewHeader());
         spaceSection.append(this.createSpacePreviewBody());
 
-        this.populateSpacePreviewHeader(this.overheadSatData);
+        this.toggleLoadingSpinner(this._document.getElementById('space-preview-header').children[1]);
         this.populateSatelliteQuickview(this.overheadSatData);
-        this.populateISSmap(this.issPositionData);
+        this.issTracker.initISSTracker(this.issMap);
       })
       .catch(error => console.error(error));
   }
@@ -189,13 +183,19 @@ class HomeView {
     spacePreviewHeader.id = 'space-preview-header';
     spacePreviewHeader.innerHTML = 'Space';
     spacePreviewHeader.addEventListener('click', event => {
-      console.log('space clicked');
-      this.togglePreview(this._document.getElementById('space'));
+      event.preventDefault();
+      if (this.overheadSatData !== null && this.issTracker.isISSMapLoaded) {
+        this.togglePreview(this._document.getElementById('space'));
+      }
     });
 
     const overheadCounter = this._document.createElement('span');
     overheadCounter.id = 'space-preview-overhead-simple';
     spacePreviewHeader.append(overheadCounter);
+
+    const loadingIcon = this._document.createElement('i');
+    loadingIcon.className = 'fas fa-spinner loading-spinner';
+    spacePreviewHeader.append(loadingIcon);
 
     return spacePreviewHeader;
   }
@@ -212,10 +212,17 @@ class HomeView {
     const spacePreviewBody = this._document.createElement('div');
     spacePreviewBody.id = 'space-preview-body';
 
+    const detailsButton = this._document.createElement('button');
+    detailsButton.className = 'section-details-button';
+    detailsButton.addEventListener('click', event => {
+      event.preventDefault();
+      console.log('go to space details page');
+    });
+
     const issMap = this._document.createElement('div');
     issMap.id = 'iss-map';
     issMap.style.height = '300px';
-    issMap.style.width = '500px';
+    issMap.style.maxWidth = '500px';
     spacePreviewBody.append(issMap);
 
     const satelliteQuickview = this._document.createElement('div');
@@ -236,11 +243,32 @@ class HomeView {
     }
     satelliteQuickview.append(satelliteQuickviewList);
 
-    const satelliteQuickviewListMoreButton = this._document.createElement('button');
-    satelliteQuickviewListMoreButton.id = 'show-more-satellites';
-    satelliteQuickviewListMoreButton.addEventListener('click', event => {
-      console.log('show more satellites');
+    const listButtonContainer = this._document.createElement('div');
+    listButtonContainer.id = 'satellite-list-button-container';
+
+    const listUpButton = this._document.createElement('button');
+    listUpButton.className = 'satellite-list-buttons';
+    listUpButton.addEventListener('click', event => {
+      event.preventDefault();
+      this.traverseSatelliteList('up');
     });
+    const buttonUpIcon = this._document.createElement('i');
+    buttonUpIcon.className = 'far fa-arrow-alt-circle-up';
+    listUpButton.append(buttonUpIcon);
+    listButtonContainer.append(listUpButton);
+
+    const listDownButton = this._document.createElement('button');
+    listDownButton.className = 'satellite-list-buttons';
+    listDownButton.addEventListener('click', event => {
+      event.preventDefault();
+      this.traverseSatelliteList('down');
+    });
+    const buttonDownIcon = this._document.createElement('i');
+    buttonDownIcon.className = 'far fa-arrow-alt-circle-down';
+    listDownButton.append(buttonDownIcon);
+    listButtonContainer.append(listDownButton);
+
+    satelliteQuickview.append(listButtonContainer);
 
     spacePreviewBody.append(satelliteQuickview);
 
@@ -248,17 +276,36 @@ class HomeView {
   }
 
   /**
-   * Get the space section header and update
-   * overhead satellite data
+   * Determine starting index to be used in satellite list on button click
    *
-   * params: collection
-   * satellites - collection of overhead satellite data objects
+   * params: string
+   * direction - 'up' or 'down'
    *
    * return: none
   **/
-  populateSpacePreviewHeader(satellites = this.overheadSatData) {
-    const spacePreviewHeaderCounter = this._document.getElementById('space-preview-overhead-simple');
-    spacePreviewHeaderCounter.innerHTML = `Overhead: ${satellites.info.satcount}`;
+  traverseSatelliteList(direction) {
+    const satelliteList = this._document.getElementById('satellite-quickview-container').children[1];
+    const satCount = this.overheadSatData.above.length;
+    const buttons = this._document.getElementById('satellite-list-button-container').children;
+
+    let newIndex;
+    if (direction == 'up') {
+      newIndex = this.satelliteListStart - 3;
+      newIndex = (newIndex < 0) ? 0: newIndex;
+      buttons[1].disabled = false;
+      if (newIndex == 0) {
+        buttons[0].disabled = true;
+      }
+    } else {
+      newIndex = this.satelliteListStart + 3;
+      newIndex = (newIndex + 3 > satCount) ? satCount - 3: newIndex;
+      buttons[0].disabled = false;
+      if (newIndex == (satCount - 3)) {
+        buttons[1].disabled = true;
+      }
+    }
+    this.satelliteListStart = newIndex;
+    this.populateSatelliteList(satelliteList.children, this.overheadSatData.above, newIndex);
   }
 
   /**
@@ -273,231 +320,63 @@ class HomeView {
   populateSatelliteQuickview(satellites = this.overheadSatData) {
     const satelliteQuickview = this._document.getElementById('satellite-quickview-container');
     const header = satelliteQuickview.children[0];
-    header.innerHTML = `Overhead now: ${satellites.info.satcount}`;
+    header.innerHTML = `Currently there are ${satellites.info.satcount} satellites overhead now`;
 
     const list = satelliteQuickview.children[1];
     const selected = satellites.above;
-    for (let i=0; i < list.children.length && i < selected.length; i++) {
-      const li = list.children[i];
+    this.populateSatelliteList(list.children, selected, 0);
+
+    const buttons = this._document.getElementById('satellite-list-button-container').children;
+    buttons[0].disabled = true;
+    buttons[1].disabled = selected.length < 4;
+  }
+
+  /**
+   * Fill in satellite information in each list item
+   *
+   * params: HTMLElement, collection, number
+   * list - satellite HTML list
+   * satellites - array of satellites's data
+   * startIndex - the starting index of satellites to be used,
+   *              will always be 3 less than length of satellites
+   *              as long as satellites has at least 3 items
+   *
+   * return: none
+  **/
+  populateSatelliteList(list, satellites, startIndex) {
+    for (let i=0; i < 3; i++) {
+      const li = list[i];
       const name = li.children[0];
       const date = li.children[1];
-      name.innerHTML = `${selected[i].satname}`;
-      date.innerHTML = `Launched ${selected[i].launchDate}`;
+      if ((startIndex + i) < satellites.length) {
+        name.innerHTML = `${satellites[startIndex + i].satname}`;
+        date.innerHTML = `Launched ${satellites[startIndex + i].launchDate}`;
+      } else {
+        name.innerHTML = 'N/A';
+        date.innerHTML = 'N/A';
+      }
     }
   }
 
   /**
-   * Get the space section map and create ISS tracking layer
+   * Get the earthquake section header and set
+   * alert icon display if an alert is available
    *
-   * params: colelction
-   * issPositions - collection of ISS position data objects
+   * params: object
+   * geoData - earquake preview data from API
    *
    * return: none
   **/
-  populateISSmap(issPositions = this.issPositionData) {
-    this.westBoundary = this.currentLocation.longitude - 180;
-    this.eastBoundary = this.currentLocation.longitude + 180;
+  populateGeoPreviewHeader(geoData = this.geoData) {
+    const header = this._document.getElementById('earthquake-preview-header');
 
-    // create ISS icon
-    this.issIcon = L.icon({
-      iconUrl: 'assets/icons/iss.png',
-      iconSize: [70, 70]
+    const alert = geoData.find(feature => {
+      if (feature.properties.alert != null) {
+        return feature;
+      }
     });
-
-    // generate map
-    this.issMap = L.map('iss-map')
-      .setView([0, this.currentLocation.longitude], 0)
-      .setMaxBounds([
-        [-90, this.westBoundary],
-        [90, this.eastBoundary]
-      ]);
-    L.esri.basemapLayer('Imagery', {nowrap: true}).addTo(this.issMap);
-
-    this.updateISSMapOverlays(this.generateISSTracks(issPositions));
-
-    this.issInterval = setInterval(() => {
-      console.log('Updating ISS');
-      this.issCurrentLocationIndex++;
-      if (this.issCurrentLocationIndex > this.issCurrentTrackEndIndex) {
-        console.log(this.issCurrentLocationIndex, this.issCurrentTrackEndIndex);
-        this.generateNewISSTracks();
-      }
-      this.updateISSMapOverlays(this.generateISSTracks(this.issPositionData));
-    }, (2 * 60 * 1000));
-  }
-
-  updateISSMapOverlays(trackData) {
-    const positions = this.issPositionData[0].Coordinates[1][0];
-
-    if (this.issMarker == null) {
-      this.issMarker = L.marker(trackData.markerLatLng, {icon: this.issIcon}).addTo(this.issMap);
-      L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(this.issMap);
-    } else {
-      const newMarker = L.marker(trackData.nextLatLng, {icon: this.issIcon});
-      this.issMap.removeLayer(this.issMarker);
-      this.issMarker = newMarker;
-      newMarker.addTo(this.issMap);
-    }
-
-    if (this.issFullPastPolyline == null
-        || this.issPartialPastPolyline == null
-        || this.issPartialFuturePolyline == null
-        || this.issFullFuturePolyline == null) {
-      const fullFuturePath = this.generatePolylineLatLng(trackData.startTrack.start, trackData.startTrack.end, positions);
-      const fullPastPath = this.generatePolylineLatLng(trackData.endTrack.start, trackData.endTrack.end, positions);
-      const pastOfCurrentPath = this.generatePolylineLatLng(trackData.indexTrack.start, this.issCurrentLocationIndex + 1, positions);
-      const futureOfCurrentPath = this.generatePolylineLatLng(this.issCurrentLocationIndex, trackData.indexTrack.end, positions);
-
-      this.issFullPastPolyline = L.polyline(fullPastPath, {color: 'red'}).addTo(this.issMap);
-      this.issPartialPastPolyline = L.polyline(pastOfCurrentPath, {color: 'yellow'}).addTo(this.issMap);
-      this.issPartialFuturePolyline = L.polyline(futureOfCurrentPath, {color: 'white'}).addTo(this.issMap);
-      this.issFullFuturePolyline = L.polyline(fullFuturePath, {color: 'blue'}).addTo(this.issMap);
-    } else {
-      L.polyline([trackData.previousLatLng, trackData.nextLatLng], {color: 'yellow'}).addTo(this.issMap);
-    }
-  }
-
-  generateNewISSTracks() {
-    console.log('near track data end, fetching new data');
-    const timeframe = this.getISSTimeframe();
-    this.spaceService.fetchISSTrack(timeframe)
-      .then(issTrack => {
-        this.issPositionData = issTrack.Result.Data[1];
-        this.clearISSLayers();
-        this.updateISSMapOverlays(this.generateISSTracks(issTrack.Result.Data[1]));
-      })
-      .catch(error => console.error(error));
-  }
-
-  clearISSLayers() {
-    this.issMap.removeLayer(this.issMarker);
-    this.issMap.removeLayer(this.issFullPastPolyline);
-    this.issMap.removeLayer(this.issFullFuturePolyline);
-    this.issMap.removeLayer(this.issPartialPastPolyline);
-    this.issMap.removeLayer(this.issPartialFuturePolyline);
-    this.issMarker = null;
-    this.issFullPastPolyline = null;
-    this.issFullFuturePolyline = null;
-    this.issPartialPastPolyline = null;
-    this.issPartialFuturePolyline = null;
-  }
-
-  generateISSTracks(issPositions = this.issPositionData) {
-    // find and set iss current location by its time index
-    if (this.issCurrentLocationIndex == null) {
-      const _now = new Date();
-      const positionTimes = issPositions[0].Time[1];
-      for (let i=115; i < 126; i++) {
-        const positionTime = new Date(positionTimes[i][1]);
-        if (Math.abs(_now - positionTime) <= (60 * 1000)) {
-          this.issCurrentLocationIndex = i;
-        }
-      }
-    }
-
-    // determine positions for ISS marker offset by client location
-    const positions = issPositions[0].Coordinates[1][0];
-
-    const indexTrack = this.getTrack(this.issCurrentLocationIndex, null, null, this.westBoundary, this.eastBoundary, positions.Longitude[1]);
-    const startTrack = this.getTrack(null, indexTrack.end + 1, null, this.westBoundary, this.eastBoundary, positions.Longitude[1]);
-    const endTrack = this.getTrack(null, null, indexTrack.start - 1, this.westBoundary, this.eastBoundary, positions.Longitude[1]);
-
-    const markerLong = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex]);
-    const markerLat = positions.Latitude[1][this.issCurrentLocationIndex];
-    const previousLat = positions.Latitude[1][this.issCurrentLocationIndex - 1];
-    const previousLong = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex - 1]);
-    const nextLat = positions.Latitude[1][this.issCurrentLocationIndex];
-    const nextLong = this.getConvertedLongitude(positions.Longitude[1][this.issCurrentLocationIndex]);
-
-    return {
-      indexTrack: indexTrack,
-      startTrack: startTrack,
-      endTrack: endTrack,
-      markerLatLng: [markerLat, markerLong],
-      previousLatLng: [previousLat, previousLong],
-      nextLatLng: [nextLat, nextLong]
-    };
-  }
-
-  getTrack(index, start = null, end = null, westBoundary, eastBoundary, positions) {
-    const errorMargin = 10;
-    let _start = (start == null) ? 0: start;
-    let _end = (end == null) ? positions.length - 1: end;
-    let foundStart = false;
-    let foundEnd = false;
-    let foundMid = false;
-    const startedFromWest = positions[index] > eastBoundary;
-    let nearEast = false;
-    for (let i=0; i < 60; i++) {
-      if (start != null) {
-        // have start, go forward until positions[i] > eastBoundary
-        if (positions[start + i] < eastBoundary) {
-          foundMid = true;
-        }
-        if (foundMid && positions[start + i] > eastBoundary && positions[start + i] < eastBoundary + errorMargin) {
-          _end = start + i - 1;
-          this.issCurrentTrackEndIndex = _end;
-          break;
-        }
-      } else if (end != null) {
-        // have end, go back until positions[j]
-        if (positions[end - i] > eastBoundary) {
-          foundMid = true;
-        }
-        if (foundMid && positions[end - i] < eastBoundary && positions[end - i] < eastBoundary + errorMargin) {
-          _start = end - i;
-          break;
-        }
-      } else {
-        // have somewhere in middle, go both directions to find start and end
-        if (!foundStart) {
-          if (positions[index - i] > eastBoundary && positions[index - i] < eastBoundary + errorMargin) {
-            _start = index - i;
-            foundStart = true;
-          }
-        }
-        if (!foundEnd) {
-          if (positions[index + i] > eastBoundary && positions[index + i] < eastBoundary + errorMargin) {
-            console.log('found end', i, positions[index + i]);
-            _end = index + i - 1;
-            foundEnd = true;
-          }
-        }
-      }
-    }
-    console.log(`With ${index}, ${start}, ${end} - generated ${_start} - ${_end}`);
-    return {start: _start, end: _end};
-  }
-
-  getConvertedLongitude(longitude) {
-    const offsetLong = (longitude < 180) ? longitude: longitude - 360;
-    return (offsetLong < (180 + this.currentLocation.longitude)) ? offsetLong: offsetLong - 360;
-  }
-
-  generatePolylineLatLng(start, end, positions = this.issPositionData[0].Coordinates[1][0]) {
-    let isBeforeBreak = true;
-    let lastLong = 0;
-    const preBreakTrack = [];
-    const postBreakTrack = [];
-    for (let i=start; i < end; i++) {
-      const _long = positions.Longitude[1][i];
-      const _lat = positions.Latitude[1][i];
-      const convertedLong = this.getConvertedLongitude(_long);
-      if (lastLong > 0 && convertedLong < 0) {
-        isBeforeBreak = false;
-      }
-      lastLong = convertedLong;
-      if (isBeforeBreak) {
-        preBreakTrack.push([_lat, convertedLong]);
-      } else {
-        postBreakTrack.push([_lat, convertedLong]);
-      }
-    }
-    for (let postExtension=end - 1; postExtension < end + 2; postExtension++) {
-      postBreakTrack.push([positions.Latitude[1][postExtension], positions.Longitude[1][postExtension]]);
-    }
-    const track = [preBreakTrack, postBreakTrack];
-    return track;
+    const alertIcon = header.children[0];
+    alertIcon.style.display = (alert !== undefined) ? 'inline-block': 'none';
   }
 
   /**
@@ -510,9 +389,105 @@ class HomeView {
    * return: none
   **/
   populateGeoPreviewBody(geoData = this.geoData) {
-    const started = this.startTime;
     const map = L.map('earthquake-preview-map').setView([this.currentLocation.latitude, this.currentLocation.longitude], 9);
     L.esri.basemapLayer('Topographic').addTo(map);
+    this.quakeLayer = this.getQuakeLayer(geoData).addTo(map);
+    map.on('moveend', event => {
+      // moveend is fired when the map is loaded for the first time,
+      // ignore the first event trigger
+      if (this.geoMapLoadEvent) {
+        this.geoMapLoadEvent = false;
+        return;
+      }
+
+      // get new map center coordinates and create object with correct format
+      const _coords = event.target.getCenter();
+      const newCenter = {
+        latitude: _coords.lat,
+        longitude: _coords.lng
+      };
+
+      // if distance moved was small (like centering on a nearby point),
+      // do not update
+      if (this.getDistance(this.geoMapLocation, newCenter) < (this.maxRadius / 3)) {
+        return;
+      } else {
+        this.geoMapLocation = newCenter;
+      }
+
+      let startDate = new Date();
+      startDate.setDate(startDate.getDate() - 14);
+
+      const geoQuery = {
+        format: 'geojson',
+        starttime: startDate.toISOString(),
+        latitude: newCenter.latitude,
+        longitude: newCenter.longitude,
+        maxradiuskm: this.maxRadius,
+        eventtype: 'earthquake',
+        limit: this.geoLimit,
+        jsonerror: true
+      };
+
+      this.geoService.fetchGeoData(geoQuery)
+        .then(geoData => {
+          this.geoData = geoData.features;
+          map.removeLayer(this.quakeLayer);
+          this.quakeLayer = this.getQuakeLayer(geoData).addTo(map);
+        })
+        .catch(error => console.error(error));
+    });
+  }
+
+  /**
+   * Use Haversine formula to get distance between two latlng points
+   *
+   * params: object, object
+   * point1 and point2 - objects with latitude and longitude keys
+   *
+   * return: number
+   * - great-circle distance between two points
+  **/
+  getDistance(point1, point2) {
+    const R = 6371;
+    const dLat = this.getRadians(point2.latitude - point1.latitude);
+    const dLong = this.getRadians(point2.longitude - point1.longitude);
+    const a = (
+      Math.sin(dLat / 2)
+      * Math.sin(dLat / 2)
+      + Math.cos(this.getRadians(point1.latitude))
+      * Math.cos(this.getRadians(point2.latitude))
+      * Math.sin(dLong / 2)
+      * Math.sin(dLong / 2)
+    );
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  /**
+   * Convert degrees to radians
+   *
+   * params: number
+   * degree - number in degrees to be converted
+   *
+   * return: number
+   * - number converted to radians
+  **/
+  getRadians(degree) {
+    return degree * (Math.PI / 180);
+  }
+
+  /**
+   * Create the earthquake layer for leaflet map
+   *
+   * params: object
+   * geoData - earthquake data from USGS
+   *
+   * return: object
+   * - leaflet layer with earthquake data points
+  **/
+  getQuakeLayer(geoData = this.geoData) {
+    const started = this.startTime;
     const quakeLayer = L.geoJSON(geoData, {
       pointToLayer: function (feature, latlng) {
         let r = 255;
@@ -562,8 +537,9 @@ class HomeView {
 
         layer.bindPopup(`<a href=${properties.url}>${properties.title}</a>`)
       }
-    }).addTo(map);
+    });
     quakeLayer.addData(geoData);
+    return quakeLayer;
   }
 
   /**
@@ -579,15 +555,20 @@ class HomeView {
     geoHeader.id = 'earthquake-preview-header';
     geoHeader.innerHTML = 'Earthquakes';
     geoHeader.addEventListener('click', event => {
-      console.log('geo clicked');
-      this.togglePreview(this._document.getElementById('earth'));
+      event.preventDefault();
+      if (this.geoData !== null) {
+        this.togglePreview(this._document.getElementById('earth'));
+      }
     });
 
     const alertIcon = this._document.createElement('i');
-    alertIcon.id = 'earthquake-alert';
-    alertIcon.className = 'fas fa-exclamation-triangle';
+    alertIcon.className = 'fas fa-exclamation-triangle alert-icon';
     alertIcon.style.display = 'none';
     geoHeader.append(alertIcon);
+
+    const loadingIcon = this._document.createElement('i');
+    loadingIcon.className = 'fas fa-spinner loading-spinner';
+    geoHeader.append(loadingIcon);
 
     return geoHeader;
   }
@@ -606,6 +587,7 @@ class HomeView {
 
     const geoMap = this._document.createElement('div');
     geoMap.id = 'earthquake-preview-map';
+    geoMap.style.maxWidth = '500px';
     geoMap.style.height = '300px';
     geoBody.append(geoMap);
 
@@ -622,17 +604,19 @@ class HomeView {
    * return: none
   **/
   populateWeatherPreviewHeader(forecast = this.weather) {
-    const updatedAt = this._document.getElementById('preview-updated-at');
+    const header = this._document.getElementById('forecast-preview-header');
+
+    const updatedAt = header.children[0];
     const forecastTime = new Date(forecast.currently.time);
     const _hour = forecastTime.getHours();
     const _minutes = forecastTime.getMinutes();
     const hour = ((0 < _hour) && (_hour < 13)) ? _hour: Math.abs(_hour - 12);
     const minute = (_minutes < 10) ? `0${_minutes}`: _minutes;
     const ampm = (_hour < 13) ? 'am': 'pm';
-    updatedAt.innerHTML = `Updated at ${hour}:${minute} ${ampm}`;
+    updatedAt.innerHTML = `Updated at<br>${hour}:${minute} ${ampm}`;
 
-    const alertIcon = this._document.getElementById('preview-alert');
-    alertIcon.style.display = (forecast.alerts !== undefined) ? 'block': 'none';
+    const alertIcon = header.children[1];
+    alertIcon.style.display = (forecast.alerts !== undefined) ? 'inline-block': 'none';
   }
 
   /**
@@ -648,7 +632,7 @@ class HomeView {
     const weatherIcon = this._document.getElementById('preview-icon');
     weatherIcon.className = this.getWeatherIcon(forecast.currently.icon);
 
-    const summary = this._document.getElementById('preview-summary');
+    const summary = this._document.getElementById('preview-text');
     summary.innerHTML = forecast.currently.summary;
 
     const temperature = this._document.getElementById('current-thermometer');
@@ -663,7 +647,7 @@ class HomeView {
 
     const wind = this._document.getElementById('current-wind');
     const windSpeed = wind.children[0];
-    windSpeed.innerHTML = `${forecast.currently.windSpeed}mph`;
+    windSpeed.innerHTML = `Wind ${forecast.currently.windSpeed}mph`;
     const windDirection = wind.children[1];
     windDirection.className = `wi wi-wind towards-${forecast.currently.windDirection}-deg`;
 
@@ -709,8 +693,10 @@ class HomeView {
     weatherHeader.id = 'forecast-preview-header';
     weatherHeader.innerHTML = 'Weather';
     weatherHeader.addEventListener('click', event => {
-      console.log('weather clicked');
-      this.togglePreview(this._document.getElementById('atmosphere'));
+      event.preventDefault();
+      if (this.weather !== null) {
+        this.togglePreview(this._document.getElementById('weather'));
+      }
     });
 
     const updatedAt = this._document.createElement('span');
@@ -719,10 +705,13 @@ class HomeView {
     weatherHeader.append(updatedAt);
 
     const alertIcon = this._document.createElement('i');
-    alertIcon.id = 'preview-alert';
-    alertIcon.className = 'fas fa-exclamation-triangle';
+    alertIcon.className = 'fas fa-exclamation-triangle alert-icon';
     alertIcon.style.display = 'none';
     weatherHeader.append(alertIcon);
+
+    const loadingIcon = this._document.createElement('i');
+    loadingIcon.className = 'fas fa-spinner loading-spinner';
+    weatherHeader.append(loadingIcon);
 
     return weatherHeader;
   }
@@ -747,21 +736,24 @@ class HomeView {
     weatherIcon.id = 'preview-icon';
     currentlyContainer.append(weatherIcon);
 
-    const summary = this._document.createElement('p');
-    summary.id = 'preview-summary';
-    currentlyContainer.append(summary);
+    const summaryContainer = this._document.createElement('div');
+    summaryContainer.id = 'preview-summary';
 
     const temperature = this._document.createElement('i');
     temperature.id = 'current-thermometer';
-    currentlyContainer.append(temperature);
+    summaryContainer.append(temperature);
+
+    const text = this._document.createElement('p');
+    text.id = 'preview-text';
+    summaryContainer.append(text);
 
     const highlow = this._document.createElement('p');
     highlow.id = 'current-high-low';
-    currentlyContainer.append(highlow);
+    summaryContainer.append(highlow);
 
     const humidity = this._document.createElement('p');
     humidity.id = 'current-humidity';
-    currentlyContainer.append(humidity);
+    summaryContainer.append(humidity);
 
     const wind = this._document.createElement('div');
     wind.id = 'current-wind';
@@ -769,7 +761,9 @@ class HomeView {
     wind.append(windSpeed);
     const windDirection = this._document.createElement('i');
     wind.append(windDirection);
-    currentlyContainer.append(wind);
+    summaryContainer.append(wind);
+
+    currentlyContainer.append(summaryContainer);
 
     weatherBody.append(currentlyContainer);
 
@@ -896,21 +890,5 @@ class HomeView {
     const datetime = new Date(day);
     const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     return weekdays[datetime.getDay()];
-  }
-
-  /**
-   * Set the start and end ISO strings to fetch ISS position tracks
-   *
-   * params: none
-   *
-   * return: object
-   * - object with start and end ISO string timestamps
-  **/
-  getISSTimeframe() {
-    const start = new Date();
-    start.setHours(start.getHours() - 4);
-    const end = new Date();
-    end.setHours(end.getHours() + 4);
-    return {start: start.toISOString(), end: end.toISOString()};
   }
 }
