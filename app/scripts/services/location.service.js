@@ -8,6 +8,8 @@ class LocationService {
   constructor(latitude, longitude) {
     this.latitude = latitude;
     this.longitude = longitude;
+    this.eastBoundary = longitude + 180;
+    this.westBoundary = longitude - 180;
   }
 
   /**
@@ -26,6 +28,21 @@ class LocationService {
   }
 
   /**
+   * Get client's georaphic location
+   *
+   * params: none
+   *
+   * return: object: {number, number}
+   * object containing the latitude and longitude of client's location
+  **/
+  getBoundaries() {
+    return {
+      eastBoundary: this.eastBoundary,
+      westBoundary: this.westBoundary
+    };
+  }
+
+  /**
    * Store client's geographic location
    *
    * params: [object], [number], [number]
@@ -39,14 +56,20 @@ class LocationService {
     if (window && window.navigator.geolocation) {
       window.navigator.geolocation.getCurrentPosition(
         position => {
-          this.setLocation(position.coords.latitude, position.coords.longitude);
+          this.latitude = position.coords.latitude;
+          this.longitude = position.coords.longitude;
+          this.eastBoundary = position.coords.longitude + 180;
+          this.westBoundary = position.coords.longitude - 180;
         },
         error => {
           console.log(`Error utilizing geolocation ${error.status}: ${error.message}`);
         }
       );
     } else if (latitude && longitude) {
-      this.setLocation(latitude, longitude);
+      this.latitude = latitude;
+      this.longitude = longitude;
+      this.eastBoundary = longitude + 180;
+      this.westBoundary = longitude - 180;
     } else {
       console.log('Geolocation not available');
     }
