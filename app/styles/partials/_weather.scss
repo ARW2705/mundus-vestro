@@ -1,0 +1,87 @@
+#weather {
+  display: flex;
+  flex-direction: column;
+}
+
+#forecast-preview-header {
+  font-size: 2.5em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 10px 10px;
+  border: 1px solid black;
+}
+
+#preview-updated-at {
+  // display: inline !important;
+  padding-left: 10px;
+  font-size: 0.4em;
+}
+
+#forecast-preview-body {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  position: relative;
+  left: -999em;
+  height: 0;
+}
+
+#forecast-currently {
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 100px;
+}
+
+#preview-icon {
+  font-size: 6em;
+  height: 100px;
+}
+
+#preview-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  width: 50%;
+}
+
+#current-thermometer {
+  font-size: 3.5em;
+}
+
+#preview-text,
+#current-high-low,
+#current-humidity,
+#current-wind {
+  font-size: 1.2em;
+}
+
+#current-wind {
+  display: flex;
+}
+
+#forecast-hourly {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+#forecast-daily {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.forecast-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.forecast-day-precip {
+  display: flex;
+  justify-content: space-around;
+}

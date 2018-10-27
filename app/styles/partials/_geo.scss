@@ -1,0 +1,15 @@
+#earthquake-preview-header {
+  font-size: 2.5em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 10px 10px;
+  border: 1px solid black;
+}
+
+#earthquake-preview-body {
+  margin-top: 10px;
+  position: relative;
+  left: -999em;
+  height: 0;
+}
