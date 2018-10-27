@@ -17,7 +17,7 @@ const paths = {
     src: 'app/assets/**/*',
     dest: 'dist/assets/'
   },
-  sass: {
+  scss: {
     src: 'app/styles/*.scss',
     watch: 'app/styles/**/*.scss',
     dest: 'dist/styles/'
@@ -31,6 +31,7 @@ const paths = {
       'app/scripts/vendor/*.js',
       'app/scripts/_keys.js',
       'app/scripts/services/*.service.js',
+      'app/scripts/components/*.component.js',
       'app/scripts/views/home.js',
       'app/scripts/index.js'
     ],
@@ -65,10 +66,10 @@ gulp.task('assets', () => {
 });
 
 gulp.task('sass', () => {
-  return gulp.src(paths.sass.src)
-    // .pipe(sass({outputStyle: 'compressed'})).on('error', sass.logError)
+  return gulp.src(paths.scss.src)
+    // .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
     .pipe(sass()).on('error', sass.logError)
-    .pipe(gulp.dest(paths.sass.dest))
+    .pipe(gulp.dest(paths.scss.dest))
     .pipe(browserSync.stream())
 });
 
@@ -87,21 +88,12 @@ gulp.task('scripts', () => {
     .pipe(gulp.dest(paths.scripts.dest))
 });
 
-gulp.task('test-scripts', () => {
-  return gulp.src(paths.scripts.src)
-    .pipe(babel({
-      presets: ['@babel/env']
-    }))
-    .pipe(concat('test.js'))
-    .on('error', console.error.bind(console))
-    .pipe(gulp.dest('tmp/'))
-});
-
 gulp.task('preview', previewTasks, () => {
   browserSync.init({
     server: 'dist'
   });
-  gulp.watch(paths.sass.watch, ['sass']);
+
+  gulp.watch(paths.scss.watch, ['sass']);
 });
 
 gulp.task('default', () => {});
