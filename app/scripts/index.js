@@ -9,13 +9,15 @@ document.addEventListener('DOMContentLoaded', event => {
   const weatherService = new WeatherService();
   const geoService = new GeoService();
   const spaceService = new SpaceService();
+  const issTracker = new ISSTrackerComponent(locationService, spaceService);
 
   const homeView = new HomeView(
     document,
     locationService,
     weatherService,
     geoService,
-    spaceService
+    spaceService,
+    issTracker
   );
   homeView.loadContent();
 });
