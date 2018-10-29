@@ -6,7 +6,6 @@
 
 class ISSTrackerComponent {
   constructor(LocationService, SpaceService) {
-    this.locationService = LocationService;
     this.currentLocation = LocationService.getLocation();
     this.currentBoundaries = LocationService.getBoundaries();
     this.spaceService = SpaceService;
@@ -49,13 +48,27 @@ class ISSTrackerComponent {
   **/
   initISSTracker() {
     const timeframe = this.getISSTimeframe();
-    this.spaceService.fetchISSTrack(timeframe)
+    return this.spaceService.fetchISSTrack(timeframe)
       .then(issData => {
-        console.log('iss data:', issData.Result.Data[1][0].Coordinates[1][0].Longitude[1]);
-        this.issPositionData = issData.Result.Data[1];
-        this.populateISSmap(issData.Result.Data[1]);
+        if (this.isValidISSData(issData)) {
+          console.log('iss data:', issData.Result.Data[1][0].Coordinates[1][0].Longitude[1]);
+          this.issPositionData = issData.Result.Data[1];
+          this.populateISSmap(issData.Result.Data[1]);
+          return Promise.resolve({status: 'ok'});
+        } else {
+          return Promise.reject({status: 'invalid json response'});
+        }
       })
       .catch(error => console.error(error));
+  }
+
+  /**
+   *
+  **/
+  isValidISSData(issData) {
+    return issData
+           && issData.Result.Data[1][0].Coordinates[1][0].Latitude
+           && issData.Result.Data[1][0].Coordinates[1][0].Longitude;
   }
 
   /**
