@@ -27,14 +27,40 @@ const paths = {
     dest: 'dist/styles/'
   },
   scripts: {
-    src: [
-      'app/scripts/vendor/*.js',
+    srcShared: [
+      'app/scripts/vendor/idb.js',
       'app/scripts/_keys.js',
-      'app/scripts/services/*.service.js',
-      'app/scripts/components/*.component.js',
-      'app/scripts/views/home.js',
-      'app/scripts/index.js'
+      'app/scripts/services/location.service.js',
+      'app/scripts/services/forms.service.js',
+      'app/scripts/components/header.component.js'
     ],
+    srcHomeView: [
+      'app/scripts/services/weather.service.js',
+      'app/scripts/services/geological.service.js',
+      'app/scripts/services/space.service.js',
+      'app/scripts/components/iss-tracker.component.js',
+      'app/scripts/components/usgs-map.component.js',
+      'app/scripts/views/home.js',
+      'app/scripts/home.main.js'
+    ],
+    srcSkyView: [
+      'app/scripts/services/weather.service.js',
+      'app/scripts/views/sky.js',
+      'app/scripts/sky.main.js'
+    ],
+    srcEarthView: [
+      'app/scripts/services/geological.service.js',
+      'app/scripts/components/usgs-map.component.js',
+      'app/scripts/views/earth.js',
+      'app/scripts/earth.main.js'
+    ],
+    srcSpaceView: [
+      'app/scripts/services/space.service.js',
+      'app/scripts/components/iss-tracker.component.js',
+      'app/scripts/views/space.js',
+      'app/scripts/space.main.js'
+    ],
+    srcLoader: 'app/scripts/shared/loader.js',
     dest: 'dist/scripts'
   },
   clean: {
@@ -43,7 +69,12 @@ const paths = {
 };
 
 const previewTasks = [
-  'scripts',
+  'shared-scripts',
+  'home-view',
+  'sky-view',
+  'earth-view',
+  'space-view',
+  'loader',
   'html',
   'assets',
   'wicons',
@@ -79,12 +110,57 @@ gulp.task('wicons', () => {
     .pipe(gulp.dest(paths.wicons.dest))
 });
 
-gulp.task('scripts', () => {
-  return gulp.src(paths.scripts.src)
+gulp.task('shared-scripts', () => {
+  return gulp.src(paths.scripts.srcShared)
+    .pipe(babel({
+      presets: ['@babel/env']
+    }))
+    .pipe(concat('shared.min.js'))
+    .pipe(gulp.dest(paths.scripts.dest))
+});
+
+gulp.task('home-view', () => {
+  return gulp.src(paths.scripts.srcHomeView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('index.min.js'))
+    .pipe(gulp.dest(paths.scripts.dest))
+});
+
+gulp.task('sky-view', () => {
+  return gulp.src(paths.scripts.srcSkyView)
+    .pipe(babel({
+      presets: ['@babel/env']
+    }))
+    .pipe(concat('sky.details.min.js'))
+    .pipe(gulp.dest(paths.scripts.dest))
+});
+
+gulp.task('earth-view', () => {
+  return gulp.src(paths.scripts.srcEarthView)
+    .pipe(babel({
+      presets: ['@babel/env']
+    }))
+    .pipe(concat('earth.details.min.js'))
+    .pipe(gulp.dest(paths.scripts.dest))
+});
+
+gulp.task('space-view', () => {
+  return gulp.src(paths.scripts.srcSpaceView)
+    .pipe(babel({
+      presets: ['@babel/env']
+    }))
+    .pipe(concat('space.details.min.js'))
+    .pipe(gulp.dest(paths.scripts.dest))
+});
+
+gulp.task('loader', () => {
+  return gulp.src(paths.scripts.srcLoader)
+    .pipe(babel({
+      presets: ['@babel/env']
+    }))
+    .pipe(concat('loader.min.js'))
     .pipe(gulp.dest(paths.scripts.dest))
 });
 
