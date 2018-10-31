@@ -6,8 +6,9 @@
 
 class ISSTrackerComponent {
   constructor(LocationService, SpaceService) {
-    this.currentLocation = LocationService.getLocation();
-    this.currentBoundaries = LocationService.getBoundaries();
+    this.locationService = LocationService;
+    this.currentLocation = null;
+    this.currentBoundaries = null;
     this.spaceService = SpaceService;
     this.issPositionData = null;
     this.issInterval = null;
@@ -23,19 +24,15 @@ class ISSTrackerComponent {
     this.indexTrack = null;
     this.startTrack = null;
     this.endTrack = null;
+    this.locationMarker = null;
     this.addedPastTracks = [];
     this.isISSMapLoaded = false;
   }
 
   /**
-   * Get ISS tracker status
    *
-   * params: none
-   *
-   * return: boolean
-   * - true if data values are not null, false if null
   **/
-  isISSTrackerLoaded() {
+  isISSMapLoaded() {
     return this.isISSMapLoaded;
   }
 
@@ -46,7 +43,9 @@ class ISSTrackerComponent {
    *
    * return: none
   **/
-  initISSTracker() {
+  buildISSTracker() {
+    this.currentLocation = this.locationService.getLocation();
+    this.currentBoundaries = this.locationService.getBoundaries();
     const timeframe = this.getISSTimeframe();
     return this.spaceService.fetchISSTrack(timeframe)
       .then(issData => {
@@ -72,6 +71,15 @@ class ISSTrackerComponent {
   }
 
   /**
+   *
+  **/
+  invalidateSize() {
+    if (this.issMap !== null) {
+      this.issMap.invalidateSize();
+    }
+  }
+
+  /**
    * Get the space section map and create ISS tracking layer
    *
    * params: colelction
@@ -89,7 +97,10 @@ class ISSTrackerComponent {
       iconSize: [70, 70]
     });
 
-    this.issMap = L.map('iss-map')
+    if (this.issMap == null) {
+      this.issMap = L.map('iss-map');
+    }
+    this.issMap
       .setView([0, this.currentLocation.longitude], 0)
       .setMaxBounds([
         [-90, westBoundary],
@@ -124,14 +135,22 @@ class ISSTrackerComponent {
   updateISSMapOverlays(trackData) {
     const positions = this.issPositionData[0].Coordinates[1][0];
 
+    // add location marker if there is none
+    if (this.locationMarker == null) {
+      this.locationMarker = L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(this.issMap);
+    // if location has changed, remove old marker and set new marker in new location
+    } else if (this.locationMarker.getLatLng().lng != this.currentLocation.longitude) {
+      this.issMap.removeLayer(this.locationMarker);
+      this.locationMarker = L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(this.issMap);
+    }
+
+    // add iss icon marker if there is none
     if (this.issMarker == null) {
       this.issMarker = L.marker(trackData.markerLatLng, {icon: this.issIcon}).addTo(this.issMap);
-      L.marker([this.currentLocation.latitude, this.currentLocation.longitude]).addTo(this.issMap);
+    // when iss location updates, remove the marker at the old location and set new marker in new location
     } else {
-      const newMarker = L.marker(trackData.nextLatLng, {icon: this.issIcon});
       this.issMap.removeLayer(this.issMarker);
-      this.issMarker = newMarker;
-      newMarker.addTo(this.issMap);
+      this.issMarker = L.marker(trackData.nextLatLng, {icon: this.issIcon}).addTo(this.issMap);
     }
 
     if (this.issFullPastPolyline == null
@@ -145,7 +164,7 @@ class ISSTrackerComponent {
 
       this.issFullPastPolyline = L.polyline(fullPastPath, {color: '#9e1c1c', opacity: 0.4}).addTo(this.issMap);
       this.issPartialFuturePolyline = L.polyline(futureOfCurrentPath, {color: '#ffffff', weight: 4}).addTo(this.issMap);
-      this.issPartialPastPolyline = L.polyline(pastOfCurrentPath, {color: '#d6d328', opacity: 0.7}).addTo(this.issMap);
+      this.issPartialPastPolyline = L.polyline(pastOfCurrentPath, {color: '#d6d328', weight: 4}).addTo(this.issMap);
       this.issFullFuturePolyline = L.polyline(fullFuturePath, {color: '#1c979e', opacity: 0.4}).addTo(this.issMap);
     } else {
       this.addedPastTracks.push(L.polyline([trackData.previousLatLng, trackData.nextLatLng], {color: '#d6d328', opacity: 0.7}).addTo(this.issMap));
