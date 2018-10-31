@@ -6,8 +6,9 @@
 
 class USGSMapComponent {
   constructor(LocationService, GeoService) {
-    this.currentLocation = LocationService.getLocation();
+    this.locationService = LocationService;
     this.geoService = GeoService;
+    this.currentLocation = null;
     this.geoMap = null;
     this.geoData = null;
     this.geoMapLocation = null;
@@ -27,7 +28,8 @@ class USGSMapComponent {
    * - Promise that resolves with response data if valid and rejects with error
    * message otherwise
   **/
-  initUSGSMap() {
+  buildUSGSMap() {
+    this.currentLocation = this.locationService.getLocation();
     let startDate = new Date();
     startDate.setDate(startDate.getDate() - 14);
     const geoQuery = {
@@ -43,7 +45,6 @@ class USGSMapComponent {
     return this.geoService.fetchGeoData(geoQuery)
       .then(geoData => {
         if (this.isValidGeoData(geoData)) {
-          console.log(geoData);
           this.geoData = geoData.features;
           this.geoMapLocation = this.currentLocation;
           this.populateGeoPreviewBody(geoData.features);
@@ -56,6 +57,15 @@ class USGSMapComponent {
   }
 
   /**
+   *
+  **/
+  invalidateSize() {
+    if (this.geoMap !== null) {
+      this.geoMap.invalidateSize();
+    }
+  }
+
+  /**
    * Get the earthquake section body and create
    * earthquake map with markers
    *
@@ -65,8 +75,10 @@ class USGSMapComponent {
    * return: none
   **/
   populateGeoPreviewBody(geoData = this.geoData) {
-    this.geoMap = L.map('earthquake-preview-map')
-      .setView([this.currentLocation.latitude, this.currentLocation.longitude], 9);
+    if (this.geoMap == null) {
+      this.geoMap = L.map('earthquake-preview-map');
+    }
+    this.geoMap.setView([this.currentLocation.latitude, this.currentLocation.longitude], 9);
     L.esri.basemapLayer('Topographic').addTo(this.geoMap);
     this.quakeLayer = this.getQuakeLayer(geoData).addTo(this.geoMap);
     this.geoMap.on('moveend', event => {
