@@ -5,8 +5,7 @@
 **/
 class LocationService {
   // Set default location
-  constructor(_document, latitude, longitude) {
-    this._document = _document;
+  constructor(latitude, longitude) {
     this.latitude = latitude;
     this.longitude = longitude;
     this.eastBoundary = longitude + 180;
@@ -82,8 +81,8 @@ class LocationService {
    *
    * return: none
   **/
-  setLocation(window = null, latitude = null, longitude = null) {
-    if (window && window.navigator.geolocation) {
+  setLocation(local = false, latitude = null, longitude = null) {
+    if (local && window && window.navigator.geolocation) {
       window.navigator.geolocation.getCurrentPosition(
         position => {
           this.latitude = position.coords.latitude;
@@ -121,7 +120,7 @@ class LocationService {
         longitude: this.longitude
       }
     });
-    this._document.dispatchEvent(newEvent);
+    document.dispatchEvent(newEvent);
   }
 
   /**
@@ -148,7 +147,7 @@ class LocationService {
             if (address.candidates.length) {
               const lat = parseFloat(address.candidates[0].location.y.toFixed(4));
               const long = parseFloat(address.candidates[0].location.x.toFixed(4));
-              this.setLocation(null, lat, long);
+              this.setLocation(false, lat, long);
               return Promise.resolve({
                 latitude: lat,
                 longitude: long
