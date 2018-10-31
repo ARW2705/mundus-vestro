@@ -9,11 +9,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px 10px 10px;
-  border: 1px solid black;
+  border: 1px solid $grayscale-dark;
+  border-radius: 15px;
+  background-color: $primary-color-light;
+  color: $grayscale-light;
 }
 
 #preview-updated-at {
-  // display: inline !important;
   padding-left: 10px;
   font-size: 0.4em;
 }
@@ -23,8 +25,10 @@
   flex-direction: column;
   margin-top: 10px;
   position: relative;
-  left: -999em;
-  height: 0;
+  padding: 0 10px 10px 10px;
+  background-color: $grayscale-blue;
+  color: $primary-color-light;
+  border-radius: 15px;
 }
 
 #forecast-currently {
@@ -32,7 +36,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 100px;
+  min-height: 150px;
+  border-bottom: 1px solid $grayscale-medium-light;
 }
 
 #preview-icon {
@@ -46,10 +51,14 @@
   align-items: center;
   justify-content: space-around;
   width: 50%;
+  min-height: 150px;
+  font-size: 1em;
+  color: $grayscale-light
 }
 
 #current-thermometer {
-  font-size: 3.5em;
+  font-size: 3em;
+  color: $grayscale-light;
 }
 
 #preview-text,
@@ -67,21 +76,123 @@
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
+  border-bottom: 1px solid $grayscale-medium-light;
+}
+
+#forecast-hourly time,
+#forecast-hourly p {
+  font-size: 1.3em;
+  color: $grayscale-light;
 }
 
 #forecast-daily {
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
+  color: $grayscale-light;
 }
 
 .forecast-day {
   display: flex;
   flex-direction: column;
   align-items: center;
+  font-size: 1.3em;
+}
+
+.forecast-day *,
+.forecast-hour * {
+  margin: 3px 0;
+}
+
+.hourly-icon,
+.daily-icon {
+  font-size: 1.8em !important;
+}
+
+.wi-day-sunny {
+  color: $weather-sunny;
+}
+
+.wi-night-clear,
+.wi-snow,
+.wi-sleet {
+  color: $weather-snowy;
+}
+
+.wi-rain {
+  color: $weather-rainy;
+}
+
+.wi-strong-wind {
+  color: $weather-windy;
+}
+
+.wi-fog,
+.wi-cloudy {
+  color: $weather-cloudy;
+}
+
+.wi-day-cloudy {
+  color: $weather-day-partly-cloudy;
+}
+
+.wi-night-alt-cloudy {
+  color: $weather-cloudy;
+}
+
+i[class*="towards"]::before {
+  color: $weather-keyword;
+}
+
+.forecast-day-temperatures {
+  font-size: 1.3em;
+}
+
+.highs {
+  color: $weather-warm;
+}
+
+.lows {
+  color: $weather-cool;
 }
 
 .forecast-day-precip {
   display: flex;
   justify-content: space-around;
+  color: $primary-color-light;
+}
+
+.forecast-hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1.2em;
+}
+
+.hourly-icon {
+  font-size: 1.5em;
+}
+
+.fa-thermometer-empty::before {
+  color: $weather-cold;
+}
+
+.fa-thermometer-quarter::before {
+  color: $weather-cool;
+}
+
+.fa-thermometer-half::before {
+  color: $weather-moderate;
+}
+
+.fa-thermometer-three-quarters::before {
+  color: $weather-warm;
+}
+
+.fa-thermometer-full::before {
+  color: $weather-hot;
+}
+
+.weather-keyword {
+  color: $weather-keyword;
 }

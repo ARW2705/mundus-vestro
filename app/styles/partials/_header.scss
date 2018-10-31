@@ -1,0 +1,45 @@
+#main-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 0;
+  background-color: $grayscale-blue;
+  color: $primary-color-light;
+}
+
+#main-header h1 {
+  font-size: 3.5em;
+}
+
+#main-header p {
+  font-size: 1.1em;
+}
+
+#main-header nav {
+  width: 100%;
+  font-size: 1.4em;
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-around;
+}
+
+#main-header nav a {
+  color: $grayscale-light;
+}
+
+#location-input-container {
+  margin-top: 10px;
+  padding: 0 auto;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+#location-input {
+  margin-bottom: 5px;
+}
+
+#current-location-button {
+  font-size: 1.7em;
+  color: $secondary-color;
+}

@@ -9,7 +9,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px 10px 10px;
-  border: 1px solid black;
+  border: 1px solid $grayscale-dark;
+  border-radius: 15px;
+  background-color: $primary-color-light;
+  color: white;
 }
 
 #space-preview-overhead-simple {
@@ -19,8 +22,10 @@
 #space-preview-body {
   margin-top: 10px;
   position: relative;
-  left: -999em;
-  height: 0;
+  background-color: $grayscale-blue;
+  color: $primary-color-light;
+  border-radius: 15px;
+  padding-top: 25px;
 }
 
 #satellite-quickview-container {
@@ -30,25 +35,39 @@
 }
 
 #satellite-quickview-container p {
-  display: flex;
-  flex-direction: column;
   margin: 3px 0;
+  padding: 0 5px;
+  text-align: center;
+  color: $grayscale-light;
+}
+
+#sat-count {
+  color: $secondary-color;
 }
 
 .satellite-quickview-list-item {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: nowrap;
   align-items: center;
   border-bottom: 1px solid black;
-  padding: 5px 0 2px;
+  padding: 5px 5px 2px;
 }
 
 .satellite-quickview-list-item p {
-
+  text-align: left !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: 55%;
 }
+
+// TODO: implement tooltip hover on hidden satellite names
 
 .satellite-quickview-list-item span {
   font-size: 0.8em;
+  text-align: right;
+  width: 45%;
+  color: $grayscale-medium-light;
 }
 
 #satellite-list-button-container {
@@ -59,4 +78,9 @@
 
 .satellite-list-buttons {
   font-size: 2em;
+  color: $quaternary-color;
+}
+
+.satellite-list-buttons:disabled {
+  color: $grayscale-medium;
 }

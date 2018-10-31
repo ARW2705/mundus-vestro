@@ -1,4 +1,38 @@
-$header-bg-color: #073991;
 $main-bg-color: #76a7fc;
+
+$primary-color-dark: #1d7ca7;
+$primary-color-medium-dark: #2d8db8;
+$primary-color: #1c9cd6;
+$primary-color-medium-light: #2fa4d9;
+$primary-color-light: #53b4df;
+
+$secondary-color: #ff9217;
+$secondary-color-red: #ff4317;
+
+$tertiary-color: #2e46dc;
+
+$quaternary-color: #14e067;
+
+$grayscale-dark: #3e454d;
+$grayscale-medium-dark: #6b7076;
+$grayscale-medium: #989ca0;
+$grayscale-medium-light: #c5c7c9;
+$grayscale-light: #f2f2f2;
+$grayscale-blue: #0f435b;
+
+$weather-keyword: #b29bff;
+
+$weather-sunny: #ffe23f;
+$weather-day-partly-cloudy: #cec967;
+$weather-cloudy: $grayscale-medium-light;
+$weather-snowy: $grayscale-light;
+$weather-rainy: $primary-color-light;
+$weather-windy: #23f7ff;
+
+$weather-cold: $tertiary-color;
+$weather-cool: #7888e8;
+$weather-moderate: $quaternary-color;
+$weather-warm: $secondary-color;
+$weather-hot: $secondary-color-red;
 
 $min-viewport-width: 320px;
