@@ -2,15 +2,13 @@
 
 /**
  * Home page view
- * Construct DOM elements utilizing services
+ * Construct DOM elements utilizing components and services
 **/
 
 class HomeView {
-  /**
-   * Add dependencies
-  **/
   constructor(
     _document,
+    HeaderComponent,
     LocationService,
     WeatherService,
     SpaceService,
@@ -18,6 +16,13 @@ class HomeView {
     USGSMapComponent
   ) {
     this._document = _document;
+    this._document.addEventListener('location-update', event => {
+      this.currentLocation = event.detail;
+      this.toggleLoadingSpinner(this._document.getElementById('forecast-preview-header').children[2]);
+      this.toggleLoadingSpinner(this._document.getElementById('earthquake-preview-header').children[1]);
+      this.toggleLoadingSpinner(this._document.getElementById('space-preview-header').children[1]);
+      this.fetchHomeData();
+    });
     this.currentLocation = LocationService.getLocation();
     this.currentBoundaries = LocationService.getBoundaries();
     this.weatherService = WeatherService;
@@ -28,6 +33,7 @@ class HomeView {
     this.spaceService = SpaceService;
     this.overheadSatData = null;
     this.satelliteListStart = 0;
+    HeaderComponent.createHeader();
   }
 
   /** TODO implement splash screen
@@ -40,10 +46,8 @@ class HomeView {
   **/
   showLoadingScreen(show) {
     if (show) {
-      console.log('showing loading splash screen');
       // Show screen
     } else {
-      console.log('something has loaded, hide the splash screen');
       // Hide screen
     }
   }
@@ -57,13 +61,26 @@ class HomeView {
    * return: none
   **/
   togglePreview(section) {
+    const header = section.children[0];
     const body = section.children[1];
-    if (body.style.left == '0px') {
-      body.style.left = '-999em';
-      body.style.height = '0';
+    body.classList.toggle('collapsed');
+    if (body.classList.contains('collapsed')) {
+      header.style.backgroundColor = '#53b4df';
     } else {
-      body.style.left = '0';
-      body.style.height = 'auto';
+      if (section.id == 'space') {
+        this.issTracker.invalidateSize();
+      }
+      if (section.id == 'earth') {
+        this.usgsMap.invalidateSize();
+      }
+      header.style.backgroundColor = '#0f435b';
+    }
+    if (section.id == 'weather') {
+      const updatedAt = this._document.getElementById('preview-updated-at');
+      updatedAt.style.display = (updatedAt.style.display == 'none') ? 'inline': 'none';
+    } else if (section.id == 'space') {
+      const satCount = this._document.getElementById('space-preview-overhead-simple');
+      satCount.style.display = (satCount.style.display == 'none') ? 'inline': 'none';
     }
   }
 
@@ -97,6 +114,7 @@ class HomeView {
 
     const weatherSection = this._document.getElementById('weather');
     weatherSection.append(this.createWeatherPreviewHeader());
+    weatherSection.append(this.createWeatherPreviewBody());
 
     const earthSection = this._document.getElementById('earth');
     earthSection.append(this.createGeoPreviewHeader());
@@ -106,12 +124,15 @@ class HomeView {
     spaceSection.append(this.createSpacePreviewHeader());
     spaceSection.append(this.createSpacePreviewBody());
 
+    this.fetchHomeData();
+  }
+
+  fetchHomeData() {
     // load weather forecast section
     this.weatherService.fetchForecastPreview(this.currentLocation)
       .then(weather => {
         this.showLoadingScreen(false);
         this.weather = weather;
-        weatherSection.append(this.createWeatherPreviewBody());
         this.toggleLoadingSpinner(this._document.getElementById('forecast-preview-header').children[2]);
         this.populateWeatherPreviewHeader(weather);
         this.populateWeatherPreviewBody(weather);
@@ -119,7 +140,7 @@ class HomeView {
       .catch(error => console.error(error));
 
     // load earthquake quick view section
-    this.usgsMap.initUSGSMap()
+    this.usgsMap.buildUSGSMap(this.currentLocation)
       .then(response => {
         this.showLoadingScreen(false);
         this.toggleLoadingSpinner(this._document.getElementById('earthquake-preview-header').children[1]);
@@ -138,7 +159,7 @@ class HomeView {
     };
     const spaceFetches = [
       this.spaceService.fetchSatelliteData(overheadQuery),
-      this.issTracker.initISSTracker()
+      this.issTracker.buildISSTracker()
     ];
     Promise.all(spaceFetches)
       .then(response => {
@@ -146,6 +167,7 @@ class HomeView {
         const satData = response[0];
         this.overheadSatData = satData;
         this.toggleLoadingSpinner(this._document.getElementById('space-preview-header').children[1]);
+        this.populateSatelliteCounter(satData.info.satcount);
         this.populateSatelliteQuickview(this.overheadSatData);
       })
       .catch(error => console.error(error));
@@ -208,6 +230,19 @@ class HomeView {
   createWeatherPreviewBody() {
     const weatherBody = this._document.createElement('div');
     weatherBody.id = 'forecast-preview-body';
+    weatherBody.className = 'collapsed';
+
+    // const detailsButton = this._document.createElement('button');
+    // detailsButton.className = 'section-details-button';
+    // detailsButton.innerHTML = 'More information';
+    // const buttonIcon = this._document.createElement('i');
+    // buttonIcon.className = 'fas fa-info-circle';
+    // detailsButton.append(buttonIcon);
+    // detailsButton.addEventListener('click', event => {
+    //   event.preventDefault();
+    //   console.log('go to weather details page');
+    // });
+    // weatherBody.append(detailsButton);
 
     weatherBody.append(this.createWeatherSummaryContainer());
 
@@ -388,14 +423,14 @@ class HomeView {
     temperature.innerHTML = ` ${forecast.currently.temperature}°`;
 
     const highlow = this._document.getElementById('current-high-low');
-    highlow.innerHTML = `H ${forecast.currently.high}° / L ${forecast.currently.low}°`;
+    highlow.innerHTML = `<span class="highs">H</span> ${forecast.currently.high}° / <span class="lows">L</span> ${forecast.currently.low}°`;
 
     const humidity = this._document.getElementById('current-humidity');
-    humidity.innerHTML = `Humidity ${forecast.currently.humidity}%`;
+    humidity.innerHTML = `<span class="weather-keyword">Humidity</span> ${forecast.currently.humidity}%`;
 
     const wind = this._document.getElementById('current-wind');
     const windSpeed = wind.children[0];
-    windSpeed.innerHTML = `Wind ${forecast.currently.windSpeed}mph`;
+    windSpeed.innerHTML = `<span class="weather-keyword">Wind</span> ${forecast.currently.windSpeed}mph`;
     const windDirection = wind.children[1];
     windDirection.className = `wi wi-wind towards-${forecast.currently.windDirection}-deg`;
 
@@ -409,7 +444,7 @@ class HomeView {
       const ampm = (_hour < 13) ? 'am': 'pm';
       weatherHour.children[0].innerHTML = `${hour}${ampm}`;
 
-      weatherHour.children[1].className = this.getWeatherIcon(forecast.hourly[i].icon);
+      weatherHour.children[1].className = `${this.getWeatherIcon(forecast.hourly[i].icon)} hourly-icon`;
 
       weatherHour.children[2].innerHTML = `${forecast.hourly[i].temperature}°`;
     }
@@ -419,10 +454,10 @@ class HomeView {
       const weatherDay = dailyContainer.children[i].children;
 
       weatherDay[0].innerHTML = this.getAbbreviatedWeekday(forecast.daily[i].time);
-      weatherDay[1].className = this.getWeatherIcon(forecast.daily[i].icon);
+      weatherDay[1].className = `${this.getWeatherIcon(forecast.daily[i].icon)} daily-icon`;
 
-      weatherDay[2].children[0].innerHTML = forecast.daily[i].high;
-      weatherDay[2].children[1].innerHTML = forecast.daily[i].low;
+      weatherDay[2].children[0].innerHTML = `${forecast.daily[i].high}°`;
+      weatherDay[2].children[1].innerHTML = `${forecast.daily[i].low}°`;
 
       weatherDay[3].children[1].innerHTML = `${forecast.daily[i].precip}%`;
     }
@@ -439,9 +474,9 @@ class HomeView {
   **/
   getThermometerIcon(temperature) {
     const levels = {
-      'quarter': 48,
-      'half': 64,
-      'three-quarters': 80,
+      'quarter': 42,
+      'half': 60,
+      'three-quarters': 78,
       'full': 96
     };
     let icon = 'empty';
@@ -551,6 +586,19 @@ class HomeView {
   createGeoPreviewBody() {
     const geoBody = this._document.createElement('div');
     geoBody.id = 'earthquake-preview-body';
+    geoBody.className = 'collapsed';
+
+    // const detailsButton = this._document.createElement('button');
+    // detailsButton.className = 'section-details-button';
+    // detailsButton.innerHTML = 'More information';
+    // const buttonIcon = this._document.createElement('i');
+    // buttonIcon.className = 'fas fa-info-circle';
+    // detailsButton.append(buttonIcon);
+    // detailsButton.addEventListener('click', event => {
+    //   event.preventDefault();
+    //   console.log('go to geo details page');
+    // });
+    // geoBody.append(detailsButton);
 
     const geoMap = this._document.createElement('div');
     geoMap.id = 'earthquake-preview-map';
@@ -617,6 +665,7 @@ class HomeView {
 
     const overheadCounter = this._document.createElement('span');
     overheadCounter.id = 'space-preview-overhead-simple';
+    overheadCounter.style.display = 'none';
     spacePreviewHeader.append(overheadCounter);
 
     const loadingIcon = this._document.createElement('i');
@@ -637,13 +686,19 @@ class HomeView {
   createSpacePreviewBody() {
     const spacePreviewBody = this._document.createElement('div');
     spacePreviewBody.id = 'space-preview-body';
+    spacePreviewBody.className = 'collapsed';
 
-    const detailsButton = this._document.createElement('button');
-    detailsButton.className = 'section-details-button';
-    detailsButton.addEventListener('click', event => {
-      event.preventDefault();
-      console.log('go to space details page');
-    });
+    // const detailsButton = this._document.createElement('button');
+    // detailsButton.className = 'section-details-button';
+    // detailsButton.innerHTML = 'More information';
+    // const buttonIcon = this._document.createElement('i');
+    // buttonIcon.className = 'fas fa-info-circle';
+    // detailsButton.append(buttonIcon);
+    // detailsButton.addEventListener('click', event => {
+    //   event.preventDefault();
+    //   console.log('go to space details page');
+    // });
+    // spacePreviewBody.append(detailsButton);
 
     const issMap = this._document.createElement('div');
     issMap.id = 'iss-map';
@@ -714,6 +769,19 @@ class HomeView {
   }
 
   /**
+   * Add number of satellites overhead now from api response
+   *
+   * params: number
+   * satCount - number of satellites overhead
+   *
+   * return: none
+  **/
+  populateSatelliteCounter(satCount) {
+    const headerCounter = this._document.getElementById('space-preview-overhead-simple');
+    headerCounter.innerHTML = `Overhead: ${satCount}`;
+  }
+
+  /**
    * Get the space section body and add quick
    * overhead satellite stats
    *
@@ -725,7 +793,7 @@ class HomeView {
   populateSatelliteQuickview(satellites = this.overheadSatData) {
     const satelliteQuickview = this._document.getElementById('satellite-quickview-container');
     const header = satelliteQuickview.children[0];
-    header.innerHTML = `Currently there are ${satellites.info.satcount} satellites overhead now`;
+    header.innerHTML = `Currently there are <span id="sat-count">${satellites.info.satcount}</span> satellites overhead`;
 
     const list = satelliteQuickview.children[1];
     const selected = satellites.above;
