@@ -1,0 +1,26 @@
+#main-footer {
+  background-color: $grayscale-dark;
+  color: $grayscale-light;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 60px;
+  padding: 3%;
+}
+
+#main-footer a {
+  color: $primary-color-light
+}
+
+#footer-links {
+  display: flex;
+  justify-content: space-around;
+}
+
+#footer-credits {
+  text-align: center;
+}
+
+#footer-license {
+  text-align: center;
+}
