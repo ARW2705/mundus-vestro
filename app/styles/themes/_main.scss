@@ -1,4 +1,6 @@
+/* === COLORS === */
 $main-bg-color: #76a7fc;
+$warning: #ff4317;
 
 $primary-color-dark: #1d7ca7;
 $primary-color-medium-dark: #2d8db8;
@@ -7,10 +9,7 @@ $primary-color-medium-light: #2fa4d9;
 $primary-color-light: #53b4df;
 
 $secondary-color: #ff9217;
-$secondary-color-red: #ff4317;
-
 $tertiary-color: #2e46dc;
-
 $quaternary-color: #14e067;
 
 $grayscale-dark: #3e454d;
@@ -21,22 +20,23 @@ $grayscale-light: #f2f2f2;
 $grayscale-blue: #0f435b;
 
 $weather-keyword: #b29bff;
-
 $weather-sunny: #ffe23f;
 $weather-day-partly-cloudy: #cec967;
 $weather-cloudy: $grayscale-medium-light;
 $weather-snowy: $grayscale-light;
 $weather-rainy: $primary-color-light;
 $weather-windy: #23f7ff;
-
 $weather-cold: $tertiary-color;
 $weather-cool: #7888e8;
 $weather-moderate: $quaternary-color;
 $weather-warm: $secondary-color;
-$weather-hot: $secondary-color-red;
+$weather-hot: $warning;
+/* === END COLORS === */
 
+/* === SIZES === */
 $min-viewport-width: 320px;
 $tablet-portrait-width: 480px;
 $tablet-protrait-soft-break: 600px;
 $tablet-landscape-width: 768px;
 $desktop-width: 1024px;
+/* === END SIZES == */

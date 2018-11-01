@@ -97,6 +97,17 @@
   color: $grayscale-light;
 }
 
+#weather-attribution {
+  display: flex;
+  justify-content: center;
+  height: 48px;
+}
+
+.hourly-icon,
+.daily-icon {
+  font-size: 1.8em !important;
+}
+
 .forecast-day {
   display: flex;
   flex-direction: column;
@@ -104,14 +115,66 @@
   font-size: 1.3em;
 }
 
+.forecast-day-temperatures {
+  font-size: 1.3em;
+}
+
+.forecast-day-precip {
+  display: flex;
+  justify-content: space-around;
+  color: $primary-color-light;
+}
+
 .forecast-day *,
 .forecast-hour * {
   margin: 3px 0;
 }
 
-.hourly-icon,
-.daily-icon {
-  font-size: 1.8em !important;
+i[class*="towards"]::before {
+  color: $weather-keyword;
+}
+
+.highs {
+  color: $weather-warm;
+}
+
+.lows {
+  color: $weather-cool;
+}
+
+.forecast-hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1.2em;
+}
+
+.hourly-icon {
+  font-size: 1.5em;
+}
+
+.weather-keyword {
+  color: $weather-keyword;
+}
+
+.fa-thermometer-empty::before {
+  color: $weather-cold;
+}
+
+.fa-thermometer-quarter::before {
+  color: $weather-cool;
+}
+
+.fa-thermometer-half::before {
+  color: $weather-moderate;
+}
+
+.fa-thermometer-three-quarters::before {
+  color: $weather-warm;
+}
+
+.fa-thermometer-full::before {
+  color: $weather-hot;
 }
 
 .wi-day-sunny {
@@ -143,67 +206,4 @@
 
 .wi-night-alt-cloudy {
   color: $weather-cloudy;
-}
-
-i[class*="towards"]::before {
-  color: $weather-keyword;
-}
-
-.forecast-day-temperatures {
-  font-size: 1.3em;
-}
-
-.highs {
-  color: $weather-warm;
-}
-
-.lows {
-  color: $weather-cool;
-}
-
-.forecast-day-precip {
-  display: flex;
-  justify-content: space-around;
-  color: $primary-color-light;
-}
-
-.forecast-hour {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 1.2em;
-}
-
-.hourly-icon {
-  font-size: 1.5em;
-}
-
-.fa-thermometer-empty::before {
-  color: $weather-cold;
-}
-
-.fa-thermometer-quarter::before {
-  color: $weather-cool;
-}
-
-.fa-thermometer-half::before {
-  color: $weather-moderate;
-}
-
-.fa-thermometer-three-quarters::before {
-  color: $weather-warm;
-}
-
-.fa-thermometer-full::before {
-  color: $weather-hot;
-}
-
-.weather-keyword {
-  color: $weather-keyword;
-}
-
-#weather-attribution {
-  display: flex;
-  justify-content: center;
-  height: 48px;
 }

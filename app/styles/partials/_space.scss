@@ -19,6 +19,14 @@
   font-size: 0.5em;
 }
 
+#iss-map {
+  margin: 0 auto !important;
+}
+
+#sat-count {
+  color: $secondary-color;
+}
+
 #satellite-quickview-container {
   margin-top: 5px;
   display: flex;
@@ -32,12 +40,10 @@
   color: $grayscale-light;
 }
 
-#sat-count {
-  color: $secondary-color;
-}
-
-#iss-map {
-  margin: 0 auto !important;
+#satellite-list-button-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 5%;
 }
 
 .satellite-quickview-list-item {
@@ -56,19 +62,11 @@
   width: 55%;
 }
 
-// TODO: implement tooltip hover on hidden satellite names
-
 .satellite-quickview-list-item span {
   font-size: 0.8em;
   text-align: right;
   width: 45%;
   color: $grayscale-medium-light;
-}
-
-#satellite-list-button-container {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 5%;
 }
 
 .satellite-list-buttons {
@@ -79,3 +77,5 @@
 .satellite-list-buttons:disabled {
   color: $grayscale-medium;
 }
+
+// TODO: implement tooltip hover on hidden satellite names

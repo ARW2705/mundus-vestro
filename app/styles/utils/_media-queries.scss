@@ -1,43 +1,44 @@
 @media (min-width: #{$tablet-portrait-width}) and (max-width: #{$tablet-landscape-width - 1px}) {
+  /* === HOME === */
+
+  // Shared
   .preview-body {
     padding-left: 5%;
     padding-right: 5%;
   }
-  .satellite-list-buttons {
-    font-size: 2.7em;
-    padding: 10px 5% 0;
-  }
+
+  // Space section
   #satellite-quickview-container {
     font-size: 1.4em;
   }
 }
 
 @media (min-width: #{$tablet-protrait-soft-break}) and (max-width: #{$tablet-landscape-width - 1px}) {
+  /* === HOME === */
+
+  // Header
+  #location-input {
+    width: 170px;
+  }
+  #location-input input {
+    width: 190px;
+  }
+  #current-location-button {
+    margin-left: -10px;
+  }
   #location-display {
     width: 50%;
     text-align: right;
   }
-  #location-input {
-    width: 150px;
-  }
-  #current-location-button {
-    margin-left: -10px;
+
+  // Weather section
+  #preview-icon {
+    width: auto;
   }
   #preview-summary {
     flex-direction: row;
     justify-content: space-between;
     width: 55%;
-  }
-  #preview-icon {
-    width: auto;
-  }
-  #satellite-quickview-container {
-    margin: 0 calc((100% - 500px) / 2);
-  }
-  #forecast-currently,
-  #forecast-hourly,
-  #forecast-daily {
-    justify-content: space-around;
   }
   #preview-text,
   #current-high-low,
@@ -45,45 +46,56 @@
   #current-wind {
     font-size: 1.2em;
   }
+  #forecast-currently,
+  #forecast-hourly,
+  #forecast-daily {
+    justify-content: space-around;
+  }
+
+  // Space section
+  #satellite-quickview-container {
+    margin: 0 calc((100% - 500px) / 2);
+  }
+
 }
 
 @media (min-width: #{$tablet-landscape-width}) and (max-width: #{$desktop-width - 1px}) {
+  /* === HOME === */
+
+  // Shared
   main {
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: center;
   }
   section {
     margin: 0 2%;
   }
-  #location-display {
-    width: 30%;
-    text-align: right;
+  .preview-body {
+    padding-left: 5%;
+    padding-right: 5%;
   }
-  #location-input-container {
-    justify-content: center;
-  }
-  #location-input {
-    width: 300px;
-  }
+
+  // Header
+  #location-input,
   #location-input input {
     width: 300px;
   }
   #current-location-button {
     margin-left: -30px;
   }
+  #location-display {
+    width: 30%;
+  }
+
+  // Weather section
   #weather {
     width: 100%;
-  }
-  #current-thermometer {
-    font-size: 4em;
   }
   #preview-icon {
     width: auto;
   }
-  .preview-body {
-    padding-left: 5%;
-    padding-right: 5%;
+  #current-thermometer {
+    font-size: 4em;
   }
   #preview-summary {
     flex-direction: row;
@@ -92,27 +104,33 @@
   #preview-summary-items {
     justify-content: space-around;
   }
-  #forecast-currently,
-  #forecast-hourly,
-  #forecast-daily {
-    justify-content: space-around;
-  }
-  #earth,
-  #space {
-    width: 46%;
-  }
   #preview-text,
   #current-high-low,
   #current-humidity,
   #current-wind {
     font-size: 1.2em;
   }
-  #satellite-quickview-container {
-    font-size: 1.1em;
+  #forecast-currently,
+  #forecast-hourly,
+  #forecast-daily {
+    justify-content: space-around;
+  }
+
+  // Geo section
+  #earth {
+    width: 46%;
+  }
+
+  // Space section
+  #space {
+    width: 46%;
   }
 }
 
 @media (min-width: #{$desktop-width}) {
+  /* === HOME === */
+
+  // Shared
   main {
     flex-direction: row;
     flex-wrap: wrap;
@@ -121,6 +139,8 @@
     margin: 0 2%;
     flex: 1;
   }
+
+  // Header
   #location-input {
     width: 300px;
   }
@@ -132,8 +152,9 @@
   }
   #location-display {
     width: 30%;
-    text-align: right;
   }
+
+  // Weather section
   #preview-icon {
     width: auto;
   }
