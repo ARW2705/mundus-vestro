@@ -63,7 +63,7 @@ class HeaderComponent {
   **/
   createLocationInput() {
     const form = document.createElement('form');
-    form.setAttribute('novalidation', true);
+    form.setAttribute('novalidate', 'novalidate');
     form.id = 'location-input';
     form.addEventListener('submit', event => {
       event.preventDefault();

@@ -50,7 +50,7 @@ class ISSTrackerComponent {
     return this.spaceService.fetchISSTrack(timeframe)
       .then(issData => {
         if (this.isValidISSData(issData)) {
-          console.log('iss data:', issData.Result.Data[1][0].Coordinates[1][0].Longitude[1]);
+          // console.log('iss data:', issData.Result.Data[1][0].Coordinates[1][0].Longitude[1]);
           this.issPositionData = issData.Result.Data[1];
           this.populateISSmap(issData.Result.Data[1]);
           return Promise.resolve({status: 'ok'});
@@ -183,7 +183,7 @@ class ISSTrackerComponent {
     this.spaceService.fetchISSTrack(timeframe)
       .then(issTrack => {
         this.issPositionData = issTrack.Result.Data[1];
-        console.log('iss data:', this.issPositionData);
+        // console.log('iss data:', this.issPositionData);
         this.clearISSLayers();
         this.updateISSMapOverlays(this.generateISSTracks(issTrack.Result.Data[1]));
       })
