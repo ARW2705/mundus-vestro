@@ -34,3 +34,11 @@ section {
 .collapsed {
   display: none !important;
 }
+
+.preview-body {
+  margin-top: 10px;
+  padding: 25px 10px;
+  border-radius: 15px;
+  background-color: $grayscale-blue;
+  color: $primary-color-light;
+}

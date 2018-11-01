@@ -10,12 +10,6 @@
   color: $grayscale-light;
 }
 
-#earthquake-preview-body {
-  margin-top: 10px;
-  position: relative;
-  background-color: $grayscale-blue;
-  color: $primary-color-light;
-  border-radius: 15px;
-  // padding-bottom: 25px;
-  padding: 25px 0;
+#earthquake-preview-map {
+  margin: 0 auto !important;
 }

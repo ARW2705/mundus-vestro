@@ -23,12 +23,7 @@
 #forecast-preview-body {
   display: flex;
   flex-direction: column;
-  margin-top: 10px;
-  position: relative;
-  padding: 0 10px;
-  background-color: $grayscale-blue;
-  color: $primary-color-light;
-  border-radius: 15px;
+  padding-bottom: 15px;
 }
 
 #forecast-currently {
@@ -63,11 +58,19 @@
   color: $grayscale-light;
 }
 
+#preview-summary-items {
+  font-size: 1.2em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 #preview-text,
 #current-high-low,
 #current-humidity,
 #current-wind {
-  font-size: 1.2em;
+  padding: 3% 0;
 }
 
 #current-wind {

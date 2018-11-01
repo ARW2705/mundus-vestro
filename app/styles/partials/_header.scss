@@ -30,13 +30,26 @@
 #location-input-container {
   padding: 10px 0 5px;
   display: flex;
+  flex-wrap: wrap;
   width: 100%;
   justify-content: center;
   align-items: center;
+}
+
+#location-input-container form input {
+  height: 1.7em;
 }
 
 #current-location-button {
   font-size: 1.7em;
   color: $secondary-color;
   display: flex;
+  margin-left: -35px;
+}
+
+#location-display {
+  text-align: center;
+  color: $grayscale-light;
+  padding: 5px;
+  width: 100%;
 }

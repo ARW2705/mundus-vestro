@@ -19,15 +19,6 @@
   font-size: 0.5em;
 }
 
-#space-preview-body {
-  margin-top: 10px;
-  position: relative;
-  background-color: $grayscale-blue;
-  color: $primary-color-light;
-  border-radius: 15px;
-  padding-top: 25px;
-}
-
 #satellite-quickview-container {
   margin-top: 5px;
   display: flex;
@@ -43,6 +34,10 @@
 
 #sat-count {
   color: $secondary-color;
+}
+
+#iss-map {
+  margin: 0 auto !important;
 }
 
 .satellite-quickview-list-item {
@@ -73,11 +68,11 @@
 #satellite-list-button-container {
   display: flex;
   justify-content: space-around;
-  margin-top: 10px;
+  margin-top: 5%;
 }
 
 .satellite-list-buttons {
-  font-size: 2em;
+  font-size: 3em;
   color: $quaternary-color;
 }
 
