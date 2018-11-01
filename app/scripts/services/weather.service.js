@@ -5,6 +5,9 @@
 **/
 
 class WeatherService {
+  constructor(DBService) {
+    this.dbservice = DBService;
+  }
   /**
    * API key
    *
@@ -53,20 +56,23 @@ class WeatherService {
    **/
   fetchForecast(query) {
     const proxy = HTTPS_PROXY;
-    return fetch(proxy + this.createCompleteURL(query))
-      .then(res => {
-        return res.json()
-          .then(weather => {
-            return Promise.resolve(weather);
+    const url = proxy + this.createCompleteURL(query);
+
+    return this.dbservice.idbGet(url, null, 'weather')
+      .then(response => {
+        return response.json()
+          .then(data => {
+            console.log(data);
+            return Promise.resolve(data);
           })
           .catch(error => {
-            console.log('Weather JSON parsing error', error);
+            console.log('response parse error', error);
             return Promise.reject(error);
-          });
+          })
       })
       .catch(error => {
-        console.log('Failed to fetch news', error);
-        return Promise.reject(error);
+        console.log('Error', error);
+        Promise.reject(error);
       });
   }
 
@@ -80,6 +86,7 @@ class WeatherService {
    * - Promise with weather data or error message
   **/
   fetchForecastPreview(currentLocation) {
+    console.log(currentLocation);
     const query = {
       requestType: 'forecast',
       latitude: currentLocation.latitude,
