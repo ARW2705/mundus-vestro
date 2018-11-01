@@ -8,6 +8,7 @@
 class HomeView {
   constructor(
     HeaderComponent,
+    FooterComponent,
     LocationService,
     WeatherService,
     SpaceService,
@@ -19,7 +20,9 @@ class HomeView {
       this.toggleLoadingSpinner(document.getElementById('forecast-preview-header').children[2]);
       this.toggleLoadingSpinner(document.getElementById('earthquake-preview-header').children[1]);
       this.toggleLoadingSpinner(document.getElementById('space-preview-header').children[1]);
-      this.fetchHomeData();
+      this.fetchWeatherData();
+      this.fetchUSGSData();
+      this.fetchSpaceData();
     });
     this.currentLocation = LocationService.getLocation();
     this.currentBoundaries = LocationService.getBoundaries();
@@ -32,6 +35,7 @@ class HomeView {
     this.overheadSatData = null;
     this.satelliteListStart = 0;
     HeaderComponent.createHeader();
+    FooterComponent.createFooter();
   }
 
   /** TODO implement splash screen
@@ -122,10 +126,12 @@ class HomeView {
     spaceSection.append(this.createSpacePreviewHeader());
     spaceSection.append(this.createSpacePreviewBody());
 
-    this.fetchHomeData();
+    this.fetchWeatherData();
+    this.fetchUSGSData();
+    this.fetchSpaceData();
   }
 
-  fetchHomeData() {
+  fetchWeatherData() {
     // load weather forecast section
     this.weatherService.fetchForecastPreview(this.currentLocation)
       .then(weather => {
@@ -136,7 +142,9 @@ class HomeView {
         this.populateWeatherPreviewBody(weather);
       })
       .catch(error => console.error(error));
+  }
 
+  fetchUSGSData() {
     // load earthquake quick view section
     this.usgsMap.buildUSGSMap(this.currentLocation)
       .then(response => {
@@ -145,7 +153,9 @@ class HomeView {
         this.populateGeoPreviewHeader(response.geoData.features);
       })
       .catch(error => console.error(error));
+  }
 
+  fetchSpaceData() {
     // load satellite/iss quickview section
     const overheadQuery = {
       type: 'above',
@@ -247,6 +257,15 @@ class HomeView {
     weatherBody.append(this.createWeatherHourlyContainer());
 
     weatherBody.append(this.createWeatherDailyContainer());
+
+    const attribution = document.createElement('a');
+    attribution.id = 'weather-attribution';
+    attribution.href = 'https://darksky.net/poweredby/';
+    attribution.target = '_blank';
+    const attributionImage = document.createElement('img');
+    attributionImage.src = '../assets/images/poweredby-oneline.png';
+    attribution.append(attributionImage);
+    weatherBody.append(attribution);
 
     return weatherBody;
   }
