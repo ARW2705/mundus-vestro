@@ -32,13 +32,27 @@
       <section id="space"></section>
     </main>
 
-    <footer>Test footer</footer>
+    <footer id="main-footer"></footer>
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script>
     <script src="https://unpkg.com/esri-leaflet/dist/esri-leaflet.js"></script>
     <script src="https://unpkg.com/@joergdietrich/leaflet.terminator"></script>
     <script src="scripts/shared.min.js"></script>
     <script src="scripts/index.min.js"></script>
+    <script>
+      if (navigator.serviceWorker) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('sw.js')
+            .then(function (registration) {
+              if (!navigator.serviceWorker.controller) return;
+                console.log('Service Worker registered');
+            })
+            .catch(function (error) {
+              console.log('Service Worker registration failed', error);
+            });
+        });
+      }
+    </script>
     <!-- End scripts -->
   </body>
 </html>
