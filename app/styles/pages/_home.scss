@@ -1,6 +1,4 @@
 body {
-  // display: flex;
-  // flex-direction: column;
   background-color: $primary-color;
 }
 
@@ -12,7 +10,7 @@ main {
 
 section {
   margin: 5px 0;
-  min-height: 100px;
+  padding: 10px 0;
 }
 
 .alert-icon {

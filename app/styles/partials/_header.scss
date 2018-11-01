@@ -28,18 +28,15 @@
 }
 
 #location-input-container {
-  margin-top: 10px;
-  padding: 0 auto;
+  padding: 10px 0 5px;
   display: flex;
   width: 100%;
   justify-content: center;
-}
-
-#location-input {
-  margin-bottom: 5px;
+  align-items: center;
 }
 
 #current-location-button {
   font-size: 1.7em;
   color: $secondary-color;
+  display: flex;
 }
