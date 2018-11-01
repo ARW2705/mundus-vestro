@@ -7,32 +7,44 @@ const concat = require('gulp-concat');
 const uglify = require('gulp-uglify');
 const babel = require('gulp-babel');
 const browserSync = require('browser-sync').create();
+const imageResize = require('gulp-image-resize');
+const imagemin = require('gulp-imagemin');
 
 const paths = {
   html: {
     src: 'app/*.html',
-    dest: 'dist/'
+    dest: 'dist'
   },
-  assets: {
-    src: 'app/assets/**/*',
-    dest: 'dist/assets/'
+  fonts: {
+    src: 'app/assets/fonts/**/*',
+    dest: 'dist/assets/fonts'
+  },
+  icons: {
+    src: 'app/assets/icons/**/*',
+    dest: 'dist/assets/icons'
+  },
+  images: {
+    src: 'app/assets/images/**/*',
+    dest: 'dist/assets/images'
   },
   scss: {
     src: 'app/styles/*.scss',
     watch: 'app/styles/**/*.scss',
-    dest: 'dist/styles/'
+    dest: 'dist/styles'
   },
   wicons: {
     src: 'app/styles/vendor/weather-icons/*.css',
-    dest: 'dist/styles/'
+    dest: 'dist/styles'
   },
   scripts: {
     srcShared: [
       'app/scripts/vendor/idb.js',
+      'app/scripts/services/database.service.js',
       'app/scripts/_keys.js',
       'app/scripts/services/location.service.js',
       'app/scripts/services/forms.service.js',
-      'app/scripts/components/header.component.js'
+      'app/scripts/components/header.component.js',
+      'app/scripts/components/footer.component.js'
     ],
     srcHomeView: [
       'app/scripts/services/weather.service.js',
@@ -61,6 +73,10 @@ const paths = {
       'app/scripts/space.main.js'
     ],
     srcLoader: 'app/scripts/shared/loader.js',
+    sw: {
+      src: 'app/sw.js',
+      dest: 'dist'
+    },
     dest: 'dist/scripts'
   },
   clean: {
@@ -75,8 +91,11 @@ const previewTasks = [
   'earth-view',
   'space-view',
   'loader',
+  'sw',
   'html',
-  'assets',
+  'fonts',
+  'icons',
+  'images',
   'wicons',
   'sass'
 ];
@@ -91,9 +110,24 @@ gulp.task('html', () => {
     .pipe(gulp.dest(paths.html.dest))
 });
 
-gulp.task('assets', () => {
-  return gulp.src(paths.assets.src)
-    .pipe(gulp.dest(paths.assets.dest))
+gulp.task('fonts', () => {
+  return gulp.src(paths.fonts.src)
+    .pipe(gulp.dest(paths.fonts.dest))
+});
+
+gulp.task('icons', () => {
+  return gulp.src(paths.icons.src)
+    .pipe(gulp.dest(paths.icons.dest))
+});
+
+gulp.task('images', () => {
+  return gulp.src(paths.images.src)
+    .pipe(imageResize({
+      percentage: 8,
+      imageMagick: true
+    }))
+    .pipe(imagemin({progressive: true}))
+    .pipe(gulp.dest(paths.images.dest))
 });
 
 gulp.task('sass', () => {
@@ -162,6 +196,14 @@ gulp.task('loader', () => {
     }))
     .pipe(concat('loader.min.js'))
     .pipe(gulp.dest(paths.scripts.dest))
+});
+
+gulp.task('sw', () => {
+  return gulp.src(paths.scripts.sw.src)
+    .pipe(babel({
+      presets: ['@babel/env']
+    }))
+    .pipe(gulp.dest(paths.scripts.sw.dest))
 });
 
 gulp.task('preview', previewTasks, () => {
