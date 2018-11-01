@@ -5,7 +5,8 @@
 **/
 class LocationService {
   // Set default location
-  constructor(latitude, longitude) {
+  constructor(DBService, latitude, longitude) {
+    this.dbservice = DBService;
     this.latitude = latitude;
     this.longitude = longitude;
     this.eastBoundary = longitude + 180;
@@ -114,13 +115,24 @@ class LocationService {
    * return: none
   **/
   postLocationUpdate() {
+    const _location = {
+      latitude: this.latitude,
+      longitude: this.longitude
+    };
     const newEvent = new CustomEvent('location-update', {
-      detail: {
-        latitude: this.latitude,
-        longitude: this.longitude
-      }
+      detail: _location
     });
     document.dispatchEvent(newEvent);
+    if (window.navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(swRegistration => {
+        if (swRegistration) {
+          navigator.serviceWorker.controller.postMessage({
+            title: 'set-location',
+            body: _location
+          });
+        }
+      })
+    }
   }
 
   /**
@@ -133,6 +145,7 @@ class LocationService {
    * - Promise that resolves with new latitude and longitude coordinates
   **/
   getGeocode(locationData) {
+    const proxy = HTTPS_PROXY;
     const query = {
       route: '/GeocodeServer/findAddressCandidates',
       params: {
@@ -140,7 +153,7 @@ class LocationService {
         singleLine: locationData
       }
     };
-    return fetch(this.createGISCompleteURL(query))
+    return fetch(proxy + this.createGISCompleteURL(query))
       .then(res => {
         return res.json()
           .then(address => {
