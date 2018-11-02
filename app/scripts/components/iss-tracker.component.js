@@ -30,7 +30,12 @@ class ISSTrackerComponent {
   }
 
   /**
+   * Returns ISS map load status
    *
+   * params: none
+   *
+   * return: boolean
+   * - true if ISS map basic loading has completed
   **/
   isISSMapLoaded() {
     return this.isISSMapLoaded;
@@ -62,7 +67,13 @@ class ISSTrackerComponent {
   }
 
   /**
+   * Check if ISS data from API contains coordinates
    *
+   * params: object
+   * issData - ISS data object returned from API
+   *
+   * return: boolean
+   * - true if data contains latitude and longitude coordinates
   **/
   isValidISSData(issData) {
     return issData
@@ -71,7 +82,11 @@ class ISSTrackerComponent {
   }
 
   /**
+   * Call leaflet.js invalidateSize() method to re-render map
    *
+   * params: none
+   *
+   * return: none
   **/
   invalidateSize() {
     if (this.issMap !== null) {

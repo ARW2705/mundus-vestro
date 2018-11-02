@@ -57,7 +57,11 @@ class USGSMapComponent {
   }
 
   /**
+   * Call leaflet.js invalidateSize() method to re-render map
    *
+   * params: none
+   *
+   * return: none
   **/
   invalidateSize() {
     if (this.geoMap !== null) {

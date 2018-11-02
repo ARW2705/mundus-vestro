@@ -58,7 +58,7 @@ class WeatherService {
     const proxy = HTTPS_PROXY;
     const url = proxy + this.createCompleteURL(query);
 
-    return this.dbservice.idbGet(url, null, 'weather')
+    return this.dbservice.fetchRequest(url, null, 'weather')
       .then(response => {
         return response.json()
           .then(data => {
@@ -86,7 +86,6 @@ class WeatherService {
    * - Promise with weather data or error message
   **/
   fetchForecastPreview(currentLocation) {
-    console.log(currentLocation);
     const query = {
       requestType: 'forecast',
       latitude: currentLocation.latitude,

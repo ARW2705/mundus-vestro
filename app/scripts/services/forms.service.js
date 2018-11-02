@@ -13,7 +13,14 @@ class FormService {
     };
   }
   /**
+   * Validate form data
    *
+   * params: object, object
+   * formData - key is the input type, value is to be validated
+   * [rules] - (optional) validation rules to use
+   *
+   * return: object
+   * - error response if formData was invalid
   **/
   validate(formData, rules = this.rules) {
     console.log(formData);

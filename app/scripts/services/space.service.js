@@ -51,9 +51,6 @@ class SpaceService {
    * - complete url with requested paramaters
   **/
   createCompleteSatelliteURL(query) {
-    // satellite position: /positions/{id}/{lat}/{long}/{alt}/{seconds}
-    // visible passes: /visualpasses/{id}/{lat}/{long}/{alt}/{days}/{min_visibility}
-    // overhead now: /above/{lat}/{long}/{alt}/{search-radius}/{category}
     let route = '';
     const coords = `${query.latitude}/${query.longitude}/${query.altitude}`;
     if (query.type == 'positions') {

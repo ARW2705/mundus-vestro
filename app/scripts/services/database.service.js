@@ -1,7 +1,9 @@
 'use strict';
 
 class DBService {
-  constructor() {
+  constructor(LocationService) {
+    this.locationService = LocationService;
+    this.initialLoad = true;
     this.idbName = 'mundus-db';
     this.idbVersion = 2;
     this.networkDataReceived = false;
@@ -14,13 +16,57 @@ class DBService {
           });
         case 1:
           const weatherStore = upgradeDB.createObjectStore('weather', {
-            keyPath: 'currently.time'
+            keyPath: 'id'
           });
       }
     });
   }
 
-  idbGet(url, options, dbStore) {
+  /**
+   * Get the most recently stored location record
+   *
+   * params: none
+   *
+   * return: object
+   * - Promise that resolves with last location if present
+   * or resolve with undefined if there are no locations or
+   * if there was an indexedDB error
+  **/
+  getLastLocation() {
+    return this.dbPromise.then(db => {
+      const idbRead = db.transaction('location').objectStore('location');
+      return idbRead.get(0)
+        .then(response => {
+          if (response !== undefined) {
+            this.locationService.setLocation(null, response.latitude, response.longitude);
+            return Promise.resolve(response);
+          } else {
+            let currentLocation = this.locationService.getLocation();
+            currentLocation['id'] = 0;
+            const idbWrite = db.transaction('location', 'readwrite').objectStore('location');
+            idbWrite.put(currentLocation);
+            return Promise.resolve(undefined);
+          }
+        })
+        .catch(error => {
+          return Promise.resolve(undefined);
+        })
+    })
+  }
+
+  /**
+   * Complete fetch request that is related to indexedDB data
+   * Pull from IDB if present and fallback to network
+   *
+   * params: string, object, string
+   * url - url for fetch request
+   * [options] - (optional) object contains any arguments for the fetch request
+   * dbStore - name of IDB object store to be used
+   *
+   * return: object
+   * - Promise that resolves with response object from IDB or network
+  **/
+  fetchRequest(url, options = null, dbStore) {
     let networkUpdate;
     if (options != null) {
       networkUpdate = fetch(url, options);
@@ -39,18 +85,19 @@ class DBService {
 
     return this.dbPromise.then(db => {
       const idbRead = db.transaction(dbStore).objectStore(dbStore);
-      return idbRead.getAll()
+      const currentLocation = this.locationService.getLocation();
+      const _key = `${currentLocation.latitude},${currentLocation.longitude}`;
+      return idbRead.get(_key)
         .then(response => {
-          if (response.length) {
-            console.log('weatherDB', response);
-            return response[response.length - 1];
+          console.log('idb response', response);
+          if (response) {
+            return response;
           } else {
             throw Error('No data');
           }
         })
         .then(dbResponse => {
           if (!this.networkDataReceived) {
-            console.log('idb found first');
             return Promise.resolve(new Response(JSON.stringify(dbResponse)));
           }
         })

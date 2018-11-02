@@ -5,8 +5,7 @@
 **/
 class LocationService {
   // Set default location
-  constructor(DBService, latitude, longitude) {
-    this.dbservice = DBService;
+  constructor(latitude, longitude) {
     this.latitude = latitude;
     this.longitude = longitude;
     this.eastBoundary = longitude + 180;
@@ -22,7 +21,7 @@ class LocationService {
    * - arcgis base url
   **/
   static get GIS_API_BASE_URL() {
-    return 'http://geocode.arcgis.com/arcgis/rest/services/World';
+    return 'https://geocode.arcgis.com/arcgis/rest/services/World';
   }
 
   /**
@@ -75,10 +74,10 @@ class LocationService {
   /**
    * Store client's geographic location
    *
-   * params: [object], [number], [number]
-   * window - window object to use for geolocation
-   * latitude - user input latitude
-   * longitude - user input longitude
+   * params: [boolean], [number], [number]
+   * local - (optional) defaults to false, if true, use client geolocation
+   * latitude - (optional) user input latitude
+   * longitude - (optional) user input longitude
    *
    * return: none
   **/
@@ -188,6 +187,7 @@ class LocationService {
    * - Promise that resolve with city name and zip code
   **/
   getReverseGeocode(latlng) {
+    const proxy = HTTPS_PROXY;
     const query = {
       route: '/GeocodeServer/reverseGeocode',
       params: {
@@ -196,12 +196,13 @@ class LocationService {
         location: `${latlng.longitude},${latlng.latitude}`
       }
     };
-    return fetch(this.createGISCompleteURL(query))
+    return fetch(proxy + this.createGISCompleteURL(query))
       .then(res => {
         return res.json()
           .then(geocode => {
             return Promise.resolve({
               city: geocode.address.City,
+              region: geocode.address.Region,
               zipcode: geocode.address.Postal
             });
           })
