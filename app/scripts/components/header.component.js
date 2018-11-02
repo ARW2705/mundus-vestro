@@ -12,6 +12,10 @@ class HeaderComponent {
 
   /**
    * Create header HTML
+   *
+   * params: none
+   *
+   * return: none
   **/
   createHeader() {
     const header = document.getElementById('main-header');
@@ -30,12 +34,21 @@ class HeaderComponent {
     locationInputContainer.id = 'location-input-container';
     locationInputContainer.append(this.createLocationInput());
     locationInputContainer.append(this.createClientLocationButton());
-
+    const locationDisplay = document.createElement('p');
+    locationDisplay.id = 'location-display';
+    locationInputContainer.append(locationDisplay);
     header.append(locationInputContainer);
+
+    this.populateHeaderLocation();
   }
 
   /**
    * Create navigation HTML
+   *
+   * params: none
+   *
+   * return: HTMLElement
+   * - header navigation element
   **/
   createNavigation() {
     const nav = document.createElement('nav');
@@ -60,10 +73,16 @@ class HeaderComponent {
 
   /**
    * Create client location input HTML
+   *
+   * params: none
+   *
+   * return: HTMLElement
+   * - HTML form for location input
   **/
   createLocationInput() {
     const form = document.createElement('form');
     form.setAttribute('novalidate', 'novalidate');
+    form.setAttribute('aria-label', 'Search for a location');
     form.id = 'location-input';
     form.addEventListener('submit', event => {
       event.preventDefault();
@@ -79,6 +98,7 @@ class HeaderComponent {
 
     const input = document.createElement('input');
     input.type = 'text';
+    input.setAttribute('aria-label', 'search location');
     input.placeholder = 'Enter city or zipcode';
     form.append(input);
 
@@ -86,13 +106,19 @@ class HeaderComponent {
   }
 
   /**
+   * Button to get client location
    *
+   * params: none
+   *
+   * return: HTMLElement
+   * - button element
   **/
   createClientLocationButton() {
     const button = document.createElement('button');
     button.id = 'current-location-button';
+    button.setAttribute('aria-label', 'search for your location');
     button.addEventListener('click', event => {
-      this.locationService.setLocation(window);
+      this.locationService.setLocation(true);
     });
 
     const icon = document.createElement('i');
@@ -100,5 +126,31 @@ class HeaderComponent {
     button.append(icon);
 
     return button;
+  }
+
+  /**
+   * Insert header dynamically generated data
+   *
+   * params; none
+   *
+   * return: none
+  **/
+  populateHeaderLocation() {
+    const locationName = this.locationService.getReverseGeocode(this.locationService.getLocation());
+    locationName.then(res => {
+      console.log('location header', res);
+      let address = '';
+      if (res.city) {
+        address += res.city;
+      }
+      if (res.region) {
+        address += `, ${res.region}`;
+      }
+      if (res.zipcode) {
+        address += ` ${res.zipcode}`;
+      }
+      const display = document.getElementById('location-display');
+      display.innerHTML = address;
+    });
   }
 }

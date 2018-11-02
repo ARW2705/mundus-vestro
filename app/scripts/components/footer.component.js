@@ -13,6 +13,7 @@ class FooterComponent {
 
     const github = document.createElement('a');
     github.href = 'https://github.com';
+    github.setAttribute('aria-label', 'github');
     const githubIcon = document.createElement('i');
     githubIcon.className = 'fab fa-github-alt';
     github.append(githubIcon);
@@ -22,14 +23,14 @@ class FooterComponent {
 
     const credits = document.createElement('p');
     credits.id = 'footer-credits';
-    credits.innerHTML = `Created by <a href="" target="_blank">Andrew Wanex</a>.`;
+    credits.innerHTML = `Created by <a href="#" target="_blank">Andrew Wanex</a>.`;
 
     footer.append(credits);
 
     const license = document.createElement('div');
     license.id = 'footer-license';
     const licenseText = document.createElement('p');
-    licenseText.innerHTML = `<a href="" target="_blank">MIT</a> license.`;
+    licenseText.innerHTML = `<a href="" aria-label="MIT license" target="_blank">MIT</a> license.`;
     license.append(licenseText);
 
     footer.append(license);
