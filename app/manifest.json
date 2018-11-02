@@ -1,0 +1,20 @@
+{
+  "name": "Mundus Te",
+  "short_name": "World",
+  "start_url": "/",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/assets/icons/earth-icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/assets/icons/earth-icon-128x128.png",
+      "type": "image/png",
+      "sizes": "128x128"
+    }
+  ],
+  "theme_color": "#3e454d",
+  "background_color": "#1c9cd6"
+}
