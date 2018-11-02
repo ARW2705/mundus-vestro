@@ -5,8 +5,10 @@ const cacheBaseName = 'world';
 const cacheStatic = `${cacheBaseName}-static`;
 const cacheVersion = 'v1.0.0';
 
+// Open a connection to indexedDB
 const dbPromise = idb.open('mundus-db', 2, upgradeDB => {});
 
+// On install, cache static assets
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(`${cacheStatic}-${cacheVersion}`)
@@ -35,6 +37,7 @@ self.addEventListener('install', event => {
   );
 });
 
+// On activate, delete any caches with an old version
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -53,6 +56,7 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Handle any request that interacts with the cache
 const handleCacheRequest = event => {
   event.respondWith(
     caches.match(event.request, {ignoreSearch: true})
@@ -82,12 +86,15 @@ const handleCacheRequest = event => {
   );
 }
 
+// Handle any request that interacts with the indexedDB
 const handleIDBRequest = event => {
   let dbStore = undefined;
+  let numRecordsToKeep = 1;
   const url = event.request.url;
 
   if (url.indexOf('darksky') !== -1) {
     dbStore = 'weather';
+    numRecordsToKeep = 10;
   }
 
   if (dbStore === undefined) {
@@ -102,13 +109,15 @@ const handleIDBRequest = event => {
           console.log('background fetch response', response);
           return response.json()
             .then(data => {
+              data['id'] = `${data.latitude},${data.longitude}`;
               console.log('got background data', data);
+
               const tx = db.transaction(dbStore, 'readwrite');
               const idbWrite = tx.objectStore(dbStore);
               idbWrite.put(data);
               idbWrite.openCursor(null, 'prev')
                 .then(function (cursor) {
-                  return cursor.advance(1);
+                  return cursor.advance(numRecordsToKeep);
                 })
                 .then(function clearDB(cursor) {
                   if (!cursor) return;
@@ -116,7 +125,6 @@ const handleIDBRequest = event => {
                   return cursor.continue().then(clearDB);
                 })
               return tx.complete.then(() => {
-                console.log('idb operations complete');
                 return data;
               });
             })
@@ -128,6 +136,7 @@ const handleIDBRequest = event => {
   );
 }
 
+// Hook into fetch events
 self.addEventListener('fetch', event => {
   const url = event.request.url;
 
@@ -138,21 +147,18 @@ self.addEventListener('fetch', event => {
   } else if (url.indexOf('darksky') != -1) {
     // calling for weather
     handleIDBRequest(event);
-  } else {
-    // console.log('what do', url);
   }
 });
 
+// Hook into message event from client
 self.addEventListener('message', event => {
   const dbEvent = event.data.title;
   const data = event.data.body;
   data['id'] = 0;
   if (dbEvent === 'set-location') {
     dbPromise.then(db => {
-      console.log('putting location', data);
       const idbWrite = db.transaction('location', 'readwrite').objectStore('location');
       idbWrite.put(data);
-      console.log('stored location');
     })
     .catch(error => console.log('Error storing location', error))
   }
