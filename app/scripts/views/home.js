@@ -20,6 +20,7 @@ class HomeView {
       this.toggleLoadingSpinner(document.getElementById('forecast-preview-header').children[2]);
       this.toggleLoadingSpinner(document.getElementById('earthquake-preview-header').children[1]);
       this.toggleLoadingSpinner(document.getElementById('space-preview-header').children[1]);
+      HeaderComponent.populateHeaderLocation();
       this.fetchWeatherData();
       this.fetchUSGSData();
       this.fetchSpaceData();
@@ -46,13 +47,13 @@ class HomeView {
    *
    * return: none
   **/
-  showLoadingScreen(show) {
-    if (show) {
-      // Show screen
-    } else {
-      // Hide screen
-    }
-  }
+  // showLoadingScreen(show) {
+  //   if (show) {
+  //     // Show screen
+  //   } else {
+  //     // Hide screen
+  //   }
+  // }
 
   /**
    * Toggle weather forecast preview expansion
@@ -112,7 +113,7 @@ class HomeView {
    * return: none
   **/
   loadContent() {
-    this.showLoadingScreen(true);
+    // this.showLoadingScreen(true);
 
     const weatherSection = document.getElementById('weather');
     weatherSection.append(this.createWeatherPreviewHeader());
@@ -131,11 +132,17 @@ class HomeView {
     this.fetchSpaceData();
   }
 
+  /**
+   * Fetch required data for weather section content
+   *
+   * params: none
+   *
+   * return: none
+  **/
   fetchWeatherData() {
-    // load weather forecast section
     this.weatherService.fetchForecastPreview(this.currentLocation)
       .then(weather => {
-        this.showLoadingScreen(false);
+        // this.showLoadingScreen(false);
         this.weather = weather;
         this.toggleLoadingSpinner(document.getElementById('forecast-preview-header').children[2]);
         this.populateWeatherPreviewHeader(weather);
@@ -144,19 +151,31 @@ class HomeView {
       .catch(error => console.error(error));
   }
 
+  /**
+   * Fetch required data for earthquake section content
+   *
+   * params: none
+   *
+   * return: none
+  **/
   fetchUSGSData() {
-    // load earthquake quick view section
     this.usgsMap.buildUSGSMap(this.currentLocation)
       .then(response => {
-        this.showLoadingScreen(false);
+        // this.showLoadingScreen(false);
         this.toggleLoadingSpinner(document.getElementById('earthquake-preview-header').children[1]);
         this.populateGeoPreviewHeader(response.geoData.features);
       })
       .catch(error => console.error(error));
   }
 
+  /**
+   * Fetch required data for space section content
+   *
+   * params: none
+   *
+   * return: none
+  **/
   fetchSpaceData() {
-    // load satellite/iss quickview section
     const overheadQuery = {
       type: 'above',
       latitude: this.currentLocation.latitude,
@@ -171,7 +190,7 @@ class HomeView {
     ];
     Promise.all(spaceFetches)
       .then(response => {
-        this.showLoadingScreen(false);
+        // this.showLoadingScreen(false);
         const satData = response[0];
         this.overheadSatData = satData;
         this.toggleLoadingSpinner(document.getElementById('space-preview-header').children[1]);
@@ -194,15 +213,16 @@ class HomeView {
    * HTML header
   **/
   createWeatherPreviewHeader() {
-    const weatherHeader = document.createElement('header');
+    const weatherHeader = document.createElement('h2');
     weatherHeader.id = 'forecast-preview-header';
     weatherHeader.innerHTML = 'Weather';
+    weatherHeader.setAttribute('role', 'button');
     weatherHeader.addEventListener('click', event => {
       event.preventDefault();
       if (this.weather !== null) {
         this.togglePreview(document.getElementById('weather'));
-        document.getElementById('forecast-preview-body')
-          .scrollIntoView(false, {
+        const body = document.getElementById('forecast-preview-body');
+        body.scrollIntoView(false, {
             behavior: 'smooth',
             block: 'center',
             inline: 'nearest'
@@ -218,6 +238,7 @@ class HomeView {
     const alertIcon = document.createElement('i');
     alertIcon.className = 'fas fa-exclamation-triangle alert-icon';
     alertIcon.style.display = 'none';
+    alertIcon.setAttribute('aria-label', 'weather alert');
     weatherHeader.append(alertIcon);
 
     const loadingIcon = document.createElement('i');
@@ -238,19 +259,7 @@ class HomeView {
   createWeatherPreviewBody() {
     const weatherBody = document.createElement('div');
     weatherBody.id = 'forecast-preview-body';
-    weatherBody.className = 'collapsed';
-
-    // const detailsButton = document.createElement('button');
-    // detailsButton.className = 'section-details-button';
-    // detailsButton.innerHTML = 'More information';
-    // const buttonIcon = document.createElement('i');
-    // buttonIcon.className = 'fas fa-info-circle';
-    // detailsButton.append(buttonIcon);
-    // detailsButton.addEventListener('click', event => {
-    //   event.preventDefault();
-    //   console.log('go to weather details page');
-    // });
-    // weatherBody.append(detailsButton);
+    weatherBody.className = 'collapsed preview-body';
 
     weatherBody.append(this.createWeatherSummaryContainer());
 
@@ -262,8 +271,10 @@ class HomeView {
     attribution.id = 'weather-attribution';
     attribution.href = 'https://darksky.net/poweredby/';
     attribution.target = '_blank';
+    attribution.setAttribute('aria-label', 'Learn more about Dark Sky services');
     const attributionImage = document.createElement('img');
     attributionImage.src = '../assets/images/poweredby-oneline.png';
+    attributionImage.alt = 'Powered by Dark Sky';
     attribution.append(attributionImage);
     weatherBody.append(attribution);
 
@@ -293,17 +304,20 @@ class HomeView {
     temperature.id = 'current-thermometer';
     summaryContainer.append(temperature);
 
+    const summaryItemsContainer = document.createElement('div');
+    summaryItemsContainer.id = 'preview-summary-items';
+
     const text = document.createElement('p');
     text.id = 'preview-text';
-    summaryContainer.append(text);
+    summaryItemsContainer.append(text);
 
     const highlow = document.createElement('p');
     highlow.id = 'current-high-low';
-    summaryContainer.append(highlow);
+    summaryItemsContainer.append(highlow);
 
     const humidity = document.createElement('p');
     humidity.id = 'current-humidity';
-    summaryContainer.append(humidity);
+    summaryItemsContainer.append(humidity);
 
     const wind = document.createElement('div');
     wind.id = 'current-wind';
@@ -311,7 +325,9 @@ class HomeView {
     wind.append(windSpeed);
     const windDirection = document.createElement('i');
     wind.append(windDirection);
-    summaryContainer.append(wind);
+    summaryItemsContainer.append(wind);
+
+    summaryContainer.append(summaryItemsContainer);
 
     currentlyContainer.append(summaryContainer);
 
@@ -564,9 +580,10 @@ class HomeView {
    * HTML header
   **/
   createGeoPreviewHeader() {
-    const geoHeader = document.createElement('header');
+    const geoHeader = document.createElement('h2');
     geoHeader.id = 'earthquake-preview-header';
     geoHeader.innerHTML = 'Earthquakes';
+    geoHeader.setAttribute('role', 'button');
     geoHeader.addEventListener('click', event => {
       event.preventDefault();
       if (this.geoData !== null) {
@@ -603,19 +620,7 @@ class HomeView {
   createGeoPreviewBody() {
     const geoBody = document.createElement('div');
     geoBody.id = 'earthquake-preview-body';
-    geoBody.className = 'collapsed';
-
-    // const detailsButton = document.createElement('button');
-    // detailsButton.className = 'section-details-button';
-    // detailsButton.innerHTML = 'More information';
-    // const buttonIcon = document.createElement('i');
-    // buttonIcon.className = 'fas fa-info-circle';
-    // detailsButton.append(buttonIcon);
-    // detailsButton.addEventListener('click', event => {
-    //   event.preventDefault();
-    //   console.log('go to geo details page');
-    // });
-    // geoBody.append(detailsButton);
+    geoBody.className = 'collapsed preview-body';
 
     const geoMap = document.createElement('div');
     geoMap.id = 'earthquake-preview-map';
@@ -664,9 +669,10 @@ class HomeView {
    * - HTML header
   **/
   createSpacePreviewHeader() {
-    const spacePreviewHeader = document.createElement('header');
+    const spacePreviewHeader = document.createElement('h2');
     spacePreviewHeader.id = 'space-preview-header';
     spacePreviewHeader.innerHTML = 'Space';
+    spacePreviewHeader.setAttribute('role', 'button');
     spacePreviewHeader.addEventListener('click', event => {
       event.preventDefault();
       if (this.overheadSatData !== null && this.issTracker.isISSMapLoaded) {
@@ -703,19 +709,7 @@ class HomeView {
   createSpacePreviewBody() {
     const spacePreviewBody = document.createElement('div');
     spacePreviewBody.id = 'space-preview-body';
-    spacePreviewBody.className = 'collapsed';
-
-    // const detailsButton = document.createElement('button');
-    // detailsButton.className = 'section-details-button';
-    // detailsButton.innerHTML = 'More information';
-    // const buttonIcon = document.createElement('i');
-    // buttonIcon.className = 'fas fa-info-circle';
-    // detailsButton.append(buttonIcon);
-    // detailsButton.addEventListener('click', event => {
-    //   event.preventDefault();
-    //   console.log('go to space details page');
-    // });
-    // spacePreviewBody.append(detailsButton);
+    spacePreviewBody.className = 'collapsed preview-body';
 
     const issMap = document.createElement('div');
     issMap.id = 'iss-map';
@@ -760,6 +754,7 @@ class HomeView {
 
     const listUpButton = document.createElement('button');
     listUpButton.className = 'satellite-list-buttons';
+    listUpButton.setAttribute('aria-label', 'Scroll up satellite list');
     listUpButton.addEventListener('click', event => {
       event.preventDefault();
       this.traverseSatelliteList('up');
@@ -771,6 +766,7 @@ class HomeView {
 
     const listDownButton = document.createElement('button');
     listDownButton.className = 'satellite-list-buttons';
+    listDownButton.setAttribute('aria-label', 'Scroll down satellite list');
     listDownButton.addEventListener('click', event => {
       event.preventDefault();
       this.traverseSatelliteList('down');
@@ -818,6 +814,7 @@ class HomeView {
 
     const buttons = document.getElementById('satellite-list-button-container').children;
     buttons[0].disabled = true;
+    buttons[0].setAttribute('aria-disabled', 'true');
     buttons[1].disabled = selected.length < 4;
   }
 
@@ -825,7 +822,7 @@ class HomeView {
    * Fill in satellite information in each list item
    *
    * params: HTMLElement, collection, number
-   * list - satellite HTML list
+   * HTMLlist - satellite HTML list
    * satellites - array of satellites's data
    * startIndex - the starting index of satellites to be used,
    *              will always be 3 less than length of satellites
@@ -867,15 +864,19 @@ class HomeView {
       newIndex = this.satelliteListStart - 3;
       newIndex = (newIndex < 0) ? 0: newIndex;
       buttons[1].disabled = false;
+      buttons[1].setAttribute('aria-disabled', 'false');
       if (newIndex == 0) {
         buttons[0].disabled = true;
+        buttons[0].setAttribute('aria-disabled', 'true');
       }
     } else {
       newIndex = this.satelliteListStart + 3;
       newIndex = (newIndex + 3 > satCount) ? satCount - 3: newIndex;
       buttons[0].disabled = false;
+      buttons[0].setAttribute('aria-disabled', 'false');
       if (newIndex == (satCount - 3)) {
         buttons[1].disabled = true;
+        buttons[1].setAttribute('aria-disabled', 'true');
       }
     }
     this.satelliteListStart = newIndex;
