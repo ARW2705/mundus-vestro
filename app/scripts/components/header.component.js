@@ -136,7 +136,7 @@ class HeaderComponent {
    * return: none
   **/
   populateHeaderLocation() {
-    const locationName = this.locationService.getReverseGeocode(this.locationService.getLocation());
+    const locationName = this.locationService.getLocationName();
     locationName.then(res => {
       console.log('location header', res);
       let address = '';

@@ -10,6 +10,7 @@ class LocationService {
     this.longitude = longitude;
     this.eastBoundary = longitude + 180;
     this.westBoundary = longitude - 180;
+    this.address = undefined;
   }
 
   /**
@@ -72,12 +73,36 @@ class LocationService {
   }
 
   /**
+   * Get the current location as City and State/Region
+   *
+   * params: none
+   *
+   * return: object
+   * - Promise that resolves with an object that contains the nearest city
+   * and/or state and/or region
+  **/
+  getLocationName() {
+    if (typeof this.address === 'undefined') {
+      if (this.latitude && this.longitude) {
+        return this.getReverseGeocode(this.getLocation())
+          .then(locale => {
+            this.address = locale;
+            return Promise.resolve(locale);
+          })
+          .catch(error => Promise.reject(error));
+      }
+    } else {
+      return Promise.resolve(this.address);
+    }
+  }
+
+  /**
    * Store client's geographic location
    *
    * params: [boolean], [number], [number]
-   * local - (optional) defaults to false, if true, use client geolocation
-   * latitude - (optional) user input latitude
-   * longitude - (optional) user input longitude
+   * local - defaults to false, if true, use client geolocation
+   * latitude - user input latitude
+   * longitude - user input longitude
    *
    * return: none
   **/
@@ -89,7 +114,13 @@ class LocationService {
           this.longitude = position.coords.longitude;
           this.eastBoundary = position.coords.longitude + 180;
           this.westBoundary = position.coords.longitude - 180;
-          this.postLocationUpdate();
+          this.getReverseGeocode(this.getLocation())
+            .then(locale => {
+              console.log('got locale', locale);
+              this.address = locale;
+              this.postLocationUpdate();
+            })
+            .catch(error => console.log('Error getting reverse geocode', error));
         },
         error => {
           console.log(`Error utilizing geolocation ${error.status}: ${error.message}`);
@@ -100,7 +131,12 @@ class LocationService {
       this.longitude = longitude;
       this.eastBoundary = longitude + 180;
       this.westBoundary = longitude - 180;
-      this.postLocationUpdate();
+      this.getReverseGeocode(this.getLocation())
+        .then(locale => {
+          this.address = locale;
+          this.postLocationUpdate();
+        })
+        .catch(error => console.log('Error getting reverse geocode', error));
     } else {
       console.log('Geolocation not available');
     }
@@ -116,7 +152,8 @@ class LocationService {
   postLocationUpdate() {
     const _location = {
       latitude: this.latitude,
-      longitude: this.longitude
+      longitude: this.longitude,
+      address: this.address
     };
     const newEvent = new CustomEvent('location-update', {
       detail: _location
