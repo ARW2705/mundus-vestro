@@ -16,7 +16,7 @@ class HomeView {
     USGSMapComponent
   ) {
     document.addEventListener('location-update', event => {
-      this.currentLocation = event.detail;
+      this.currentLocation = {latitude: event.detail.latitude, longitude: event.detail.longitude};
       this.toggleLoadingSpinner(document.getElementById('forecast-preview-header').children[2]);
       this.toggleLoadingSpinner(document.getElementById('earthquake-preview-header').children[1]);
       this.toggleLoadingSpinner(document.getElementById('space-preview-header').children[1]);
@@ -261,6 +261,8 @@ class HomeView {
     weatherBody.id = 'forecast-preview-body';
     weatherBody.className = 'collapsed preview-body';
 
+    weatherBody.append(this.createWeatherAlertContainer());
+
     weatherBody.append(this.createWeatherSummaryContainer());
 
     weatherBody.append(this.createWeatherHourlyContainer());
@@ -279,6 +281,26 @@ class HomeView {
     weatherBody.append(attribution);
 
     return weatherBody;
+  }
+
+  /**
+   * Create the weather alert information HTML
+   *
+   * params: none
+   *
+   * return: HTMLElement
+   * - HTML weather alert div
+  **/
+  createWeatherAlertContainer() {
+    const alertContainer = document.createElement('div');
+    alertContainer.id = 'weather-alert';
+
+    const alertTicker = document.createElement('ul');
+    alertTicker.id = 'alert-ticker';
+    alertTicker.className = 'ticker';
+    alertContainer.append(alertTicker);
+
+    return alertContainer;
   }
 
   /**
@@ -445,6 +467,34 @@ class HomeView {
    * return: none
   **/
   populateWeatherPreviewBody(forecast = this.weather) {
+    console.log('pop weather body', forecast);
+    const alertContainer = document.getElementById('weather-alert');
+    const alertTicker = document.getElementById('alert-ticker');
+    if (alertTicker.children.length) {
+      while (alertTicker.firstChild) {
+        alertTicker.removeChild(alertTicker.firstChild);
+      }
+    }
+    if (forecast.alerts) {
+      alertContainer.style.display = 'block';
+      forecast.alerts.forEach(alert => {
+        const start = new Date(alert.time * 1000);
+        const formattedStart = this.formatAlertDatetime(start);
+        const expiration = new Date(alert.expires * 1000);
+        const formattedExpiration = this.formatAlertDatetime(expiration);
+        const newAlert = document.createElement('li');
+        newAlert.className = `ticker-item alert-${alert.severity}`;
+        newAlert.innerHTML = `${alert.title}: From ${formattedStart} to ${formattedExpiration}`;
+        alertTicker.append(newAlert);
+      });
+      const tickerEnd = document.createElement('li');
+      tickerEnd.className = 'ticker-item';
+      tickerEnd.innerHTML = '// End of alerts';
+      alertTicker.append(tickerEnd);
+    } else {
+      alertContainer.style.display = 'none';
+    }
+
     const weatherIcon = document.getElementById('preview-icon');
     weatherIcon.className = this.getWeatherIcon(forecast.currently.icon);
 
@@ -561,6 +611,17 @@ class HomeView {
     const datetime = new Date(day);
     const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     return weekdays[datetime.getDay()];
+  }
+
+  formatAlertDatetime(datetime) {
+    const month = datetime.getMonth() + 1;
+    const date = datetime.getDate();
+    const _hour = datetime.getHours();
+    const _minutes = datetime.getMinutes();
+    const hour = ((0 < _hour) && (_hour < 13)) ? _hour: Math.abs(_hour - 12);
+    const minute = (_minutes < 10) ? `0${_minutes}`: _minutes;
+    const ampm = (_hour < 13) ? 'am': 'pm';
+    return `${month}/${date} at ${hour}:${minute} ${ampm}`;
   }
 
   /**
