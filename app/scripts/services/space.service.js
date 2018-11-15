@@ -14,7 +14,14 @@ class SpaceService {
    * - n2yo api key
   **/
   static get SATELLITE_API_KEY() {
-    return N2YO_API_KEY;
+    try {
+      return N2YO_API_KEY;
+    }
+    catch(error) {
+      if (error instanceof ReferenceError) {
+        return require('../_keys').N2YO_API_KEY;
+      }
+    }
   }
 
   /**

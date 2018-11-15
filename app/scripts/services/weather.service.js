@@ -17,7 +17,14 @@ class WeatherService {
    * - API key for darksky.net
   **/
   static get API_KEY() {
-    return WEATHER_API_KEY;
+    try {
+      return WEATHER_API_KEY;
+    }
+    catch(error) {
+      if (error instanceof ReferenceError) {
+        return require('../_keys').WEATHER_API_KEY;
+      }
+    }
   }
 
   /**
