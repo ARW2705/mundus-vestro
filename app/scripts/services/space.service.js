@@ -5,39 +5,17 @@
 **/
 
 class SpaceService {
+
   /**
-   * API key
+   * URL to API proxy server
    *
    * params: none
    *
    * return: string
-   * - n2yo api key
+   * - base url route to proxy server
   **/
-  static get SATELLITE_API_KEY() {
-    // try {
-    //   return N2YO_API_KEY;
-    // }
-    // catch(error) {
-    //   if (error instanceof ReferenceError) {
-    //     return require('../_keys').N2YO_API_KEY;
-    //   }
-    // }
-  }
-
   static get API_BASE_URL() {
     return 'https://andrew-wanex.com/munduste_v1.0.0/satellite';
-  }
-
-  /**
-   * Satellite tracking api base url
-   *
-   * params: none
-   *
-   * return: string
-   * - base url for n2yo api
-  **/
-  static get SATELLITE_BASE_URL() {
-    return 'https://www.n2yo.com/rest/v1/satellite/';
   }
 
   /**
@@ -71,7 +49,6 @@ class SpaceService {
     } else if (query.type == 'above') {
       route = `${query.type}/${coords}/${query.searchRadius}/${query.searchCategory}`;
     }
-    // return SpaceService.SATELLITE_BASE_URL + route + `&apiKey=${SpaceService.SATELLITE_API_KEY}`;
     return SpaceService.API_BASE_URL + '/' + route;
   }
 

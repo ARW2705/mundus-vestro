@@ -8,37 +8,15 @@ class WeatherService {
   constructor(DBService) {
     this.dbservice = DBService;
   }
+
   /**
-   * API key
+   * URL to proxy API server
    *
    * params: none
    *
    * return: string
-   * - API key for darksky.net
+   * - url route to for weather API proxy
   **/
-  static get API_KEY() {
-    // try {
-    //   return WEATHER_API_KEY;
-    // }
-    // catch(error) {
-    //   if (error instanceof ReferenceError) {
-    //     return require('../_keys').WEATHER_API_KEY;
-    //   }
-    // }
-  }
-
-  /**
-   * Weather API base URL
-   *
-   * params: none
-   *
-   * return: string
-   * - darksky.net domain
-  **/
-  static get WEATHER_API_BASE_URL() {
-    // return 'https://api.darksky.net';
-  }
-
   static get API_BASE_URL() {
     return 'https://andrew-wanex.com/munduste_v1.0.0/weather';
   }
@@ -53,7 +31,6 @@ class WeatherService {
    * - complete URL for requested data
   **/
   createCompleteURL(query) {
-    // return `${WeatherService.WEATHER_API_BASE_URL}/${query.requestType}/${WeatherService.API_KEY}/${query.latitude},${query.longitude}`;
     return `${WeatherService.API_BASE_URL}/${query.requestType}/${query.latitude},${query.longitude}`;
   }
 
@@ -67,10 +44,6 @@ class WeatherService {
    * - Promise with weather data or error message
    **/
   fetchForecast(query) {
-    // const proxy = HTTPS_PROXY;
-    // const url = proxy + this.createCompleteURL(query);
-
-    // return this.dbservice.fetchRequest(url, null, 'weather')
     return this.dbservice.fetchRequest(this.createCompleteURL(query), null, 'weather')
       .then(response => {
         return response.json()
