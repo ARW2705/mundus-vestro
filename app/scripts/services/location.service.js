@@ -181,7 +181,7 @@ class LocationService {
    * - Promise that resolves with new latitude and longitude coordinates
   **/
   getGeocode(locationData) {
-    const proxy = HTTPS_PROXY;
+    // const proxy = HTTPS_PROXY;
     const query = {
       route: '/GeocodeServer/findAddressCandidates',
       params: {
@@ -189,7 +189,8 @@ class LocationService {
         singleLine: locationData
       }
     };
-    return fetch(proxy + this.createGISCompleteURL(query))
+    // return fetch(proxy + this.createGISCompleteURL(query))
+    return fetch(this.createGISCompleteURL(query))
       .then(res => {
         return res.json()
           .then(address => {
@@ -224,7 +225,7 @@ class LocationService {
    * - Promise that resolve with city name and zip code
   **/
   getReverseGeocode(latlng) {
-    const proxy = HTTPS_PROXY;
+    // const proxy = HTTPS_PROXY;
     const query = {
       route: '/GeocodeServer/reverseGeocode',
       params: {
@@ -233,7 +234,8 @@ class LocationService {
         location: `${latlng.longitude},${latlng.latitude}`
       }
     };
-    return fetch(proxy + this.createGISCompleteURL(query))
+    // return fetch(proxy + this.createGISCompleteURL(query))
+    return fetch(this.createGISCompleteURL(query))
       .then(res => {
         return res.json()
           .then(geocode => {

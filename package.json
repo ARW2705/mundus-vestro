@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --compilers js:@babel/register"
   },
   "author": "",
   "license": "ISC",
@@ -13,7 +13,11 @@
     "@babel/core": "^7.1.2",
     "@babel/polyfill": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
+    "@babel/register": "^7.0.0",
     "browser-sync": "^2.18.12",
+    "browserify": "^16.2.3",
+    "chai": "^4.2.0",
+    "coffeescript": "^2.3.2",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^6.0.0",
     "gulp-babel": "^8.0.0",
@@ -25,6 +29,14 @@
     "gulp-rename": "^1.4.0",
     "gulp-sass": "^4.0.1",
     "gulp-sourcemaps": "^2.6.4",
-    "gulp-uglify": "^3.0.1"
+    "gulp-uglify": "^3.0.1",
+    "gulplog": "^1.0.0",
+    "jsdom": "^11.1.0",
+    "mocha": "^5.2.0",
+    "mocha-jsdom": "^2.0.0",
+    "mock-browser": "^0.92.14",
+    "url-polyfill": "^1.1.0",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0"
   }
 }

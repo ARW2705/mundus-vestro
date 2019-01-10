@@ -275,7 +275,7 @@ class HomeView {
     attribution.target = '_blank';
     attribution.setAttribute('aria-label', 'Learn more about Dark Sky services');
     const attributionImage = document.createElement('img');
-    attributionImage.src = '../assets/images/poweredby-oneline.png';
+    attributionImage.src = './assets/images/poweredby-oneline.png';
     attributionImage.alt = 'Powered by Dark Sky';
     attribution.append(attributionImage);
     weatherBody.append(attribution);

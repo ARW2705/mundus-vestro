@@ -104,6 +104,7 @@ const previewTasks = [
   'space-view',
   'loader',
   'sw',
+  'manifest',
   'html',
   'fonts',
   'icons',
@@ -112,7 +113,7 @@ const previewTasks = [
   'sass'
 ];
 
-gulp.task('clean', () => {
+gulp.task('preview-clean', () => {
   return gulp.src(paths.clean.previewSrc, {read: false})
     .pipe(clean())
 });
@@ -217,9 +218,14 @@ gulp.task('sw', () => {
     .pipe(gulp.dest(paths.scripts.sw.previewDest))
 });
 
+gulp.task('manifest', () => {
+  return gulp.src(paths.scripts.sw.manifest)
+    .pipe(gulp.dest(paths.scripts.sw.previewDest))
+});
+
 gulp.task('preview', previewTasks, () => {
   browserSync.init({
-    server: 'dist'
+    server: 'tmp'
   });
 
   gulp.watch(paths.scss.watch, ['sass']);
@@ -239,6 +245,7 @@ const buildTasks = [
   'build-space-view',
   'build-loader',
   'build-sw',
+  'build-manifest',
   'build-html',
   'build-fonts',
   'build-icons',

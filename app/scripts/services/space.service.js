@@ -14,14 +14,18 @@ class SpaceService {
    * - n2yo api key
   **/
   static get SATELLITE_API_KEY() {
-    try {
-      return N2YO_API_KEY;
-    }
-    catch(error) {
-      if (error instanceof ReferenceError) {
-        return require('../_keys').N2YO_API_KEY;
-      }
-    }
+    // try {
+    //   return N2YO_API_KEY;
+    // }
+    // catch(error) {
+    //   if (error instanceof ReferenceError) {
+    //     return require('../_keys').N2YO_API_KEY;
+    //   }
+    // }
+  }
+
+  static get API_BASE_URL() {
+    return 'https://andrew-wanex.com/munduste_v1.0.0/satellite';
   }
 
   /**
@@ -67,7 +71,8 @@ class SpaceService {
     } else if (query.type == 'above') {
       route = `${query.type}/${coords}/${query.searchRadius}/${query.searchCategory}`;
     }
-    return SpaceService.SATELLITE_BASE_URL + route + `&apiKey=${SpaceService.SATELLITE_API_KEY}`;
+    // return SpaceService.SATELLITE_BASE_URL + route + `&apiKey=${SpaceService.SATELLITE_API_KEY}`;
+    return SpaceService.API_BASE_URL + '/' + route;
   }
 
   /**
@@ -112,7 +117,6 @@ class SpaceService {
    * coordinates and times
   **/
   fetchISSTrack(timeframe) {
-    const proxy = HTTPS_PROXY;
     const fetchHeaders = new Headers();
     fetchHeaders.append('accept', 'application/json');
     fetchHeaders.append('content-type', 'application/json');

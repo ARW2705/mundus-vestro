@@ -97,7 +97,7 @@ const handleIDBRequest = event => {
     numRecordsToKeep = 10;
   }
 
-  if (dbStore === undefined) {
+  if (typeof dbStore === 'undefined') {
     return;
   }
 
