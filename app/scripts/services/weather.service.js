@@ -18,7 +18,7 @@ class WeatherService {
    * - url route to for weather API proxy
   **/
   static get API_BASE_URL() {
-    return 'https://andrew-wanex.com/munduste_v1.0.0/weather';
+    return 'https://andrew-wanex.com/mundusvestro_v1.0.0/weather';
   }
 
   /**

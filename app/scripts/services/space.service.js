@@ -15,7 +15,7 @@ class SpaceService {
    * - base url route to proxy server
   **/
   static get API_BASE_URL() {
-    return 'https://andrew-wanex.com/munduste_v1.0.0/satellite';
+    return 'https://andrew-wanex.com/mundusvestro_v1.0.0/satellite';
   }
 
   /**

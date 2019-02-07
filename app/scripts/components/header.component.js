@@ -21,7 +21,7 @@ class HeaderComponent {
     const header = document.getElementById('main-header');
 
     const banner = document.createElement('h1');
-    banner.innerHTML = 'Mundus Te';
+    banner.innerHTML = 'Mundus Vestro';
     header.append(banner);
 
     const tagline = document.createElement('p');
