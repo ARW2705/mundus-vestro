@@ -155,6 +155,9 @@
   }
 
   // Weather section
+  #weather {
+    width: calc(100% - 30px);
+  }
   #preview-icon {
     width: auto;
   }
