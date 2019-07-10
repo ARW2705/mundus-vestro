@@ -89,7 +89,7 @@
 
   // Weather section
   #weather {
-    width: 100%;
+    width: calc(100% - 30px);
   }
   #preview-icon {
     width: auto;
