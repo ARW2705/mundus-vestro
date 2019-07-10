@@ -1,6 +1,6 @@
-# Mundus Te
+# Mundus Vestro
 
-Mundus Te, Your World, is an application to view information
+Mundus Vestro, Your World, is an application to view information
 about the Earth, it's weather and climate, and the space around it.
 
 ## Requirements
@@ -13,6 +13,10 @@ Currently there are two required API keys:
 If running locally, utilize [cors-anywhere](https://github.com/Rob--W/cors-anywhere) package to create an HTTPS proxy,
 otherwise remove the proxy addition from fetch requests in services
 
+## Demo
+
+View a [demo](http://andrew-wanex.com/mundus-vestro)
+
 ## Future update ideas
 
 * Weather and climate page
@@ -23,6 +27,10 @@ otherwise remove the proxy addition from fetch requests in services
 
 * Oceanographic page
 * Earth sciences news and article sections
+
+## TODO
+
+* Add testing
 
 ## Authors
 Andrew Wanex
