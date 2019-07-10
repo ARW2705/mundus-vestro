@@ -1,4 +1,4 @@
-@media (min-width: #{$tablet-portrait-width}) and (max-width: #{$tablet-landscape-width - 1px}) {
+@media screen and (min-width: #{$tablet-portrait-width}) and (max-width: #{$tablet-landscape-width - 1px}) {
   /* === HOME === */
 
   // Shared
@@ -13,7 +13,7 @@
   }
 }
 
-@media (min-width: #{$tablet-protrait-soft-break}) and (max-width: #{$tablet-landscape-width - 1px}) {
+@media screen and (min-width: #{$tablet-protrait-soft-break}) and (max-width: #{$tablet-landscape-width - 1px}) {
   /* === HOME === */
 
   // Header
@@ -59,7 +59,7 @@
 
 }
 
-@media (min-width: #{$tablet-landscape-width}) and (max-width: #{$desktop-width - 1px}) {
+@media screen and (min-width: #{$tablet-landscape-width}) and (max-width: #{$desktop-width - 1px}) {
   /* === HOME === */
 
   // Shared
@@ -127,7 +127,7 @@
   }
 }
 
-@media (min-width: #{$desktop-width}) {
+@media screen and (min-width: #{$desktop-width}) {
   /* === HOME === */
 
   // Shared
