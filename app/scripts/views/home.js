@@ -56,7 +56,7 @@ class HomeView {
   // }
 
   /**
-   * Toggle weather forecast preview expansion
+   * Toggle preview expansion by section
    *
    * params: HTMLElement
    * section - page section to toggle view
@@ -147,6 +147,12 @@ class HomeView {
         this.toggleLoadingSpinner(document.getElementById('forecast-preview-header').children[2]);
         this.populateWeatherPreviewHeader(weather);
         this.populateWeatherPreviewBody(weather);
+        // expand the section once populated
+        const weatherSection = document.getElementById('weather');
+        const weatherBody = weatherSection.children[1];
+        if (weatherBody.classList.contains('collapsed')) {
+          this.togglePreview(weatherSection);
+        }
       })
       .catch(error => console.error(error));
   }
@@ -164,6 +170,12 @@ class HomeView {
         // this.showLoadingScreen(false);
         this.toggleLoadingSpinner(document.getElementById('earthquake-preview-header').children[1]);
         this.populateGeoPreviewHeader(response.geoData.features);
+        // expand the section once populated
+        const earthSection = document.getElementById('earth');
+        const earthBody = earthSection.children[1];
+        if (earthBody.classList.contains('collapsed')) {
+          this.togglePreview(earthSection);
+        }
       })
       .catch(error => console.error(error));
   }
@@ -196,6 +208,12 @@ class HomeView {
         this.toggleLoadingSpinner(document.getElementById('space-preview-header').children[1]);
         this.populateSatelliteCounter(satData.info.satcount);
         this.populateSatelliteQuickview(this.overheadSatData);
+        // expand the section once populated
+        const spaceSection = document.getElementById('space');
+        const spaceBody = spaceSection.children[1];
+        if (spaceBody.classList.contains('collapsed')) {
+          this.togglePreview(spaceSection);
+        }
       })
       .catch(error => console.error(error));
   }
@@ -467,7 +485,6 @@ class HomeView {
    * return: none
   **/
   populateWeatherPreviewBody(forecast = this.weather) {
-    console.log('pop weather body', forecast);
     const alertContainer = document.getElementById('weather-alert');
     const alertTicker = document.getElementById('alert-ticker');
     if (alertTicker.children.length) {
@@ -524,7 +541,7 @@ class HomeView {
       const currentTime = new Date(forecast.hourly[i].time);
       const _hour = currentTime.getHours();
       const hour = ((0 < _hour) && (_hour < 13)) ? _hour: Math.abs(_hour - 12);
-      const ampm = (_hour < 13) ? 'am': 'pm';
+      const ampm = (_hour < 12) ? 'am': 'pm';
       weatherHour.children[0].innerHTML = `${hour}${ampm}`;
 
       weatherHour.children[1].className = `${this.getWeatherIcon(forecast.hourly[i].icon)} hourly-icon`;
