@@ -34,6 +34,5 @@ class FooterComponent {
     license.append(licenseText);
 
     footer.append(license);
-    // TODO add mit license link
   }
 }

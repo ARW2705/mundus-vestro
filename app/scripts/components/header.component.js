@@ -13,9 +13,9 @@ class HeaderComponent {
   /**
    * Create header HTML
    *
-   * params: none
+   * @params: none
    *
-   * return: none
+   * @return: none
   **/
   createHeader() {
     const header = document.getElementById('main-header');
@@ -45,10 +45,9 @@ class HeaderComponent {
   /**
    * Create navigation HTML
    *
-   * params: none
+   * @params: none
    *
-   * return: HTMLElement
-   * - header navigation element
+   * @return: (HTMLElement): header navigation element
   **/
   createNavigation() {
     const nav = document.createElement('nav');
@@ -74,10 +73,9 @@ class HeaderComponent {
   /**
    * Create client location input HTML
    *
-   * params: none
+   * @params: none
    *
-   * return: HTMLElement
-   * - HTML form for location input
+   * @return: (HTMLElement): HTML form for location input
   **/
   createLocationInput() {
     const form = document.createElement('form');
@@ -108,10 +106,9 @@ class HeaderComponent {
   /**
    * Button to get client location
    *
-   * params: none
+   * @params: none
    *
-   * return: HTMLElement
-   * - button element
+   * @return: (HTMLElement): button element
   **/
   createClientLocationButton() {
     const button = document.createElement('button');
@@ -129,11 +126,11 @@ class HeaderComponent {
   }
 
   /**
-   * Insert header dynamically generated data
+   * Insert header dynamically generated location data
    *
-   * params; none
+   * @params; none
    *
-   * return: none
+   * @return: none
   **/
   populateHeaderLocation() {
     const locationName = this.locationService.getLocationName();
