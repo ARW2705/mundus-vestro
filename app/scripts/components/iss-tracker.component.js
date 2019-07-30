@@ -32,10 +32,9 @@ class ISSTrackerComponent {
   /**
    * Returns ISS map load status
    *
-   * params: none
+   * @params: none
    *
-   * return: boolean
-   * - true if ISS map basic loading has completed
+   * @return: (boolean): true if ISS map basic loading has completed
   **/
   isISSMapLoaded() {
     return this.isISSMapLoaded;
@@ -44,9 +43,9 @@ class ISSTrackerComponent {
   /**
    * Get ISS orbit data and fill in map
    *
-   * params: none
+   * @params: none
    *
-   * return: none
+   * @return: (object): single key of 'status' with either 'ok' or error message
   **/
   buildISSTracker() {
     this.currentLocation = this.locationService.getLocation();
@@ -55,7 +54,6 @@ class ISSTrackerComponent {
     return this.spaceService.fetchISSTrack(timeframe)
       .then(issData => {
         if (this.isValidISSData(issData)) {
-          // console.log('iss data:', issData.Result.Data[1][0].Coordinates[1][0].Longitude[1]);
           this.issPositionData = issData.Result.Data[1];
           this.populateISSmap(issData.Result.Data[1]);
           return Promise.resolve({status: 'ok'});
@@ -67,13 +65,11 @@ class ISSTrackerComponent {
   }
 
   /**
-   * Check if ISS data from API contains coordinates
+   * Check if ISS data from API contains both coordinates
    *
-   * params: object
-   * issData - ISS data object returned from API
+   * @params: (object): issData - ISS data object returned from API
    *
-   * return: boolean
-   * - true if data contains latitude and longitude coordinates
+   * @return: (boolean): true if data contains latitude and longitude coordinates
   **/
   isValidISSData(issData) {
     return issData
@@ -84,9 +80,9 @@ class ISSTrackerComponent {
   /**
    * Call leaflet.js invalidateSize() method to re-render map
    *
-   * params: none
+   * @params: none
    *
-   * return: none
+   * @return: none
   **/
   invalidateSize() {
     if (this.issMap !== null) {
@@ -97,21 +93,22 @@ class ISSTrackerComponent {
   /**
    * Get the space section map and create ISS tracking layer
    *
-   * params: colelction
-   * issPositions - collection of ISS position data objects
+   * @params: (Array<object>): issPositions - collection of ISS position data objects
    *
-   * return: none
+   * @return: none
   **/
   populateISSmap(issPositions = this.issPositionData) {
+    // view boundaries to prevent icon from moving off the visible map
     const westBoundary = this.currentBoundaries.westBoundary;
     const eastBoundary = this.currentBoundaries.eastBoundary;
 
-    // create ISS icon
+    // create ISS icon for leaflet map
     this.issIcon = L.icon({
       iconUrl: 'assets/icons/iss.png',
       iconSize: [70, 70]
     });
 
+    // create the map - set max boundaries to view boundaries
     if (this.issMap == null) {
       this.issMap = L.map('iss-map');
     }
@@ -122,10 +119,12 @@ class ISSTrackerComponent {
         [90, eastBoundary]
       ]);
     L.esri.basemapLayer('Imagery', {nowrap: true}).addTo(this.issMap);
-    L.terminator().addTo(this.issMap);
+    L.terminator().addTo(this.issMap); // add day/night shading
 
+    // Add the ISS path overlays to map
     this.updateISSMapOverlays(this.generateISSTracks(issPositions));
 
+    // API data is in 2 minute increments, update the map at same interval
     this.issInterval = setInterval(() => {
       this.issCurrentLocationIndex++;
       if (this.issCurrentLocationIndex > this.issCurrentTrackEndIndex) {
@@ -139,13 +138,12 @@ class ISSTrackerComponent {
   }
 
   /**
-   * Set map markers and polylines
+   * Set map markers and polylines for ISS path
    *
-   * params: object
-   * trackData - object containing latitudes and longitudes
+   * @params: (object): trackData - object containing latitudes and longitudes
    * for marker and polyline positions
    *
-   * return: none
+   * @return: none
   **/
   updateISSMapOverlays(trackData) {
     const positions = this.issPositionData[0].Coordinates[1][0];
@@ -189,16 +187,15 @@ class ISSTrackerComponent {
   /**
    * Fetch new ISS orbits and update map
    *
-   * params: none
+   * @params: none
    *
-   * return: none
+   * @return: none
   **/
   generateNewISSTracks() {
     const timeframe = this.getISSTimeframe();
     this.spaceService.fetchISSTrack(timeframe)
       .then(issTrack => {
         this.issPositionData = issTrack.Result.Data[1];
-        // console.log('iss data:', this.issPositionData);
         this.clearISSLayers();
         this.updateISSMapOverlays(this.generateISSTracks(issTrack.Result.Data[1]));
       })
@@ -208,9 +205,9 @@ class ISSTrackerComponent {
   /**
    * Clear ISS marker and orbit paths from map and reset indicies for update
    *
-   * params: none
+   * @params: none
    *
-   * return: none
+   * @return: none
   **/
   clearISSLayers() {
     this.issMap.removeLayer(this.issMarker);
@@ -237,11 +234,9 @@ class ISSTrackerComponent {
   /**
    * Set the orbit paths and return updated ISS position data
    *
-   * params: object
-   * issPositions - object containing ISS latitude and longitude coordinates
+   * @params: (object): issPositions - ISS latitude and longitude coordinates collection
    *
-   * return: object
-   * - contains coordinates to be used to update the ISS marker and current orbit path
+   * @return: (object): coordinates to be used to update the ISS marker and current orbit path
   **/
   generateISSTracks(issPositions = this.issPositionData) {
     // find and set iss current location by its time index
@@ -277,17 +272,15 @@ class ISSTrackerComponent {
    * Get the beginning and end position indicies when supplied with a middle
    * index, start index, or end index within the given boundaries
    *
-   * params: number, number, number, number, number, collection
-   * Requires one of the params 'index', 'start', and 'end' to be supplied
-   * [index] - an index located somewhere in the middle of a path
-   * [start] - an index at the start of the full future path
-   * [end] - an index at the end of the full past path
-   * westBoundary - longitude coordinate for the western edge of the map
-   * eastBoundary - longitude coordinate for the eastern edge of the map
-   * positions - array of longitude coordinates
+   * Requires one of the params 'index', 'start', or 'end'
+   * @params: (number): [index] - an index located somewhere in the middle of a path
+   * @params: (number): [start] - an index at the start of the full future path
+   * @params: (number): [end] - an index at the end of the full past path
+   * @params: (number): westBoundary - longitude coordinate for the western edge of the map
+   * @params: (number): eastBoundary - longitude coordinate for the eastern edge of the map
+   * @params: (Array<number>): positions - array of longitude coordinates
    *
-   * return: object
-   * - contains the starting and ending indices for a particular path
+   * @return: (object): contains the starting and ending indices for a particular path
    *
   **/
   getTrack(index = null, start = null, end = null, westBoundary, eastBoundary, positions) {
@@ -359,11 +352,9 @@ class ISSTrackerComponent {
    * Convert input longitude to offset by current location longitude
    * as well as convert from 0 - 360 scale to -180 - 180 scale
    *
-   * params: number
-   * longitude - float with longitude between 0 and 360 degrees
+   * @params: (number): longitude - float with longitude between 0 and 360 degrees
    *
-   * return: number
-   * - the longitude converted to -180 - 180 scale and offset by
+   * @return: (number): the longitude converted to -180 - 180 scale and offset by
    *   the distance of the current location longitude from prime meridian
   **/
   getConvertedLongitude(longitude) {
@@ -374,18 +365,16 @@ class ISSTrackerComponent {
   /**
    * Form the converted coordinates to be used for polyline
    *
-   * params: number, number, object, string
-   * start - starting coordinate index for start of polyline
-   * end - ending coordinate index for end of polyline
-   * positions - object containing array of latitudes and array of longitudes
-   * [partial] - determines which ends of polyline to extend to cover map
+   * @params: (number): start - starting coordinate index for start of polyline
+   * @params: (number): end - ending coordinate index for end of polyline
+   * @params: (object): positions - object containing array of latitudes and array of longitudes
+   * @params: (string): [partial] - determines which ends of polyline to extend to cover map
    *           - default: null - extends beginning and end of polyline for full
    *                           - future and past orbit paths
    *           - 'pre' - only extends the beginning for partial past path
    *           - 'post' - only extends the end for partial future path
    *
-   * return: collection
-   * - array of 2 element arrays [[latitude, longitude], ...]
+   * @return: (Array<Array<numbers>>): array of 2 element arrays [[latitude, longitude], ...]
   **/
   generatePolylineLatLng(start, end, positions = this.issPositionData[0].Coordinates[1][0], partial = null) {
     const track = [];
@@ -414,10 +403,9 @@ class ISSTrackerComponent {
   /**
    * Set the start and end ISO strings to fetch ISS positions
    *
-   * params: none
+   * @params: none
    *
-   * return: object
-   * - object with start and end ISO string timestamps
+   * @return: (object): start and end ISO string timestamps
   **/
   getISSTimeframe() {
     const start = new Date();
