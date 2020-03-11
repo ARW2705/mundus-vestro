@@ -1,39 +1,56 @@
 # Mundus Vestro
 
-Mundus Vestro, Your World, is an application to view information
-about the Earth, it's weather and climate, and the space around it.
+---
 
-## Requirements
+Mundus Vestro, "Your World", is an application to view information
+about the Earth, it's weather and climate, and the space around it. As few libraries/packages were used as possible in order to practice with pure JavaScript.
 
-Currently there are two required API keys:
+*This project is a work in progress, but is currently not being updated*
 
-* Weather section - [Dark Sky](https://darksky.net/dev)
-* Satellite section - [N2YO](https://www.n2yo.com/)
-
-If running locally, utilize [cors-anywhere](https://github.com/Rob--W/cors-anywhere) package to create an HTTPS proxy,
-otherwise remove the proxy addition from fetch requests in services
 
 ## Demo
 
-View a [demo](http://andrew-wanex.com/mundus-vestro)
+---
 
-## Future update ideas
+View a live [demo](http://andrew-wanex.com/mundus-vestro)
 
+
+## Future Plans
+
+---
+
+### Features
 * Weather and climate page
 * Earthquake and geological page
 * Near earth orbit information page
   * setup notifications when object(s) are overhead
   * create sky map
-
 * Oceanographic page
 * Earth sciences news and article sections
 
-## TODO
-
+### Improvements
+* Basic proxy server for local cloning
 * Add testing
 
-## Authors
-Andrew Wanex
+
+## Built With
+
+---
+
+* [JavaScript](https://developer.mozilla.org/en-US/docs/Web/javascript) - Programming language
+* [Gulp](https://gulpjs.com/) - Workflow and build automation
+* [Babel](https://babeljs.io/) - Transpiler
+* [Leaflet](https://leafletjs.com/) - Map framework
+* [DarkSky](https://darksky.net/forecast/40.7127,-74.0059/us12/en) - Weather API
+* [USGS](https://www.usgs.gov/) - Earthquake data API
+* [Goddard Space Flight Center](https://sscweb.sci.gsfc.nasa.gov) - ISS data API
+* [N2YO](https://www.n2yo.com) - Satellite data API
+* [Weather Icons](https://erikflowers.github.io/weather-icons/) - Weather icons
+* [Font Awesome](https://fontawesome.com/) - Icons
+
 
 ## License
-[MIT](https://github.com/ARW2705/mundus-te/blob/master/LICENSE)
+
+---
+
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/ARW2705/mundus-vestro/blob/master/LICENSE) file for details.
