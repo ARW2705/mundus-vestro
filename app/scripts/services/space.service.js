@@ -27,7 +27,7 @@ class SpaceService {
    * - base url for Goddard SFR SSCweb api
   **/
   static get SSCWEB_BASE_URL() {
-    return 'https://sscweb.sci.gsfc.nasa.gov/WS/sscr/2';
+    return 'https://sscweb.gsfc.nasa.gov/WS/sscr/2';
   }
 
   /**
@@ -99,10 +99,12 @@ class SpaceService {
     fetchHeaders.append('content-type', 'application/json');
     const fetchData = {
       'BfieldModel': {
-        'ExternalBFieldModel': {
-          '@class': 'gov.nasa.gsfc.sscweb.schema.Tsyganenko89CBFieldModel',
-          'KeyParameterValues': 'KP_3_3_3'
-        },
+        'ExternalBFieldModel': [
+            'gov.nasa.gsfc.sscweb.schema.Tsyganenko89CBFieldModel',
+            {
+                'KeyParameterValues': 'KP_3_3_3'
+            }
+        ],
         'InternalBFieldModel': 'IGRF',
         'TraceStopAltitude': 100
       },
@@ -156,6 +158,7 @@ class SpaceService {
     .then(res => {
       return res.json()
         .then(tracking => {
+          console.log(tracking);
           if (tracking.Result.StatusCode == 'SUCCESS') {
             return Promise.resolve(tracking);
           } else {
