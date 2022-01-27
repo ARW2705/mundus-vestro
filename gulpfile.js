@@ -2,7 +2,7 @@
 
 const gulp = require('gulp');
 const clean = require('gulp-clean');
-const sass = require('gulp-sass');
+const sass = require('gulp-sass')(require('sass'));
 const concat = require('gulp-concat');
 const uglify = require('gulp-uglify');
 const babel = require('gulp-babel');
@@ -65,19 +65,16 @@ const paths = {
     ],
     srcSkyView: [
       'app/scripts/services/weather.service.js',
-      'app/scripts/views/sky.js',
       'app/scripts/sky.main.js'
     ],
     srcEarthView: [
       'app/scripts/services/geological.service.js',
       'app/scripts/components/usgs-map.component.js',
-      'app/scripts/views/earth.js',
       'app/scripts/earth.main.js'
     ],
     srcSpaceView: [
       'app/scripts/services/space.service.js',
       'app/scripts/components/iss-tracker.component.js',
-      'app/scripts/views/space.js',
       'app/scripts/space.main.js'
     ],
     srcLoader: 'app/scripts/shared/loader.js',
@@ -96,140 +93,160 @@ const paths = {
   },
 };
 
-const previewTasks = [
-  'shared-scripts',
-  'home-view',
-  'sky-view',
-  'earth-view',
-  'space-view',
-  'loader',
-  'sw',
-  'manifest',
-  'html',
-  'fonts',
-  'icons',
-  'images',
-  'wicons',
-  'sass'
-];
 
-gulp.task('preview-clean', () => {
+function previewClean() {
   return gulp.src(paths.clean.previewSrc, {read: false})
     .pipe(clean())
-});
+}
+exports.previewClean = previewClean;
 
-gulp.task('html', () => {
+function html() {
   return gulp.src(paths.html.src)
-    .pipe(gulp.dest(paths.html.previewDest))
-});
+    .pipe(gulp.dest(paths.html.previewDest));
+}
+exports.html = html;
 
-gulp.task('fonts', () => {
+function fonts() {
   return gulp.src(paths.fonts.src)
-    .pipe(gulp.dest(paths.fonts.previewDest))
-});
+    .pipe(gulp.dest(paths.fonts.previewDest));
+}
+exports.fonts = fonts;
 
-gulp.task('icons', () => {
+function icons() {
   return gulp.src(paths.icons.src)
-    .pipe(gulp.dest(paths.icons.previewDest))
-});
+    .pipe(gulp.dest(paths.icons.previewDest));
+}
+exports.icons = icons;
 
-gulp.task('images', () => {
+function images() {
   return gulp.src(paths.images.src)
     .pipe(imageResize({
       percentage: 8,
       imageMagick: true
     }))
     .pipe(imagemin({progressive: true}))
-    .pipe(gulp.dest(paths.images.previewDest))
-});
+    .pipe(gulp.dest(paths.images.previewDest));
+}
+exports.images = images;
 
-gulp.task('sass', () => {
+function styles() {
   return gulp.src(paths.scss.src)
     .pipe(sass()).on('error', sass.logError)
     .pipe(gulp.dest(paths.scss.previewDest))
-    .pipe(browserSync.stream())
-});
+    .pipe(browserSync.stream());
+}
+exports.styles = styles;
 
-gulp.task('wicons', () => {
+function wicons() {
   return gulp.src(paths.wicons.src)
     .pipe(concat('wicons.css'))
-    .pipe(gulp.dest(paths.wicons.previewDest))
-});
+    .pipe(gulp.dest(paths.wicons.previewDest));
+}
+exports.wicons = wicons;
 
-gulp.task('shared-scripts', () => {
+function sharedScripts() {
   return gulp.src(paths.scripts.srcShared)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('shared.min.js'))
-    .pipe(gulp.dest(paths.scripts.previewDest))
-});
+    .pipe(gulp.dest(paths.scripts.previewDest));
+}
+exports.sharedScripts = sharedScripts;
 
-gulp.task('home-view', () => {
+function homeView() {
   return gulp.src(paths.scripts.srcHomeView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('index.min.js'))
-    .pipe(gulp.dest(paths.scripts.previewDest))
-});
+    .pipe(gulp.dest(paths.scripts.previewDest));
+}
+exports.homeView = homeView;
 
-gulp.task('sky-view', () => {
+function skyView() {
   return gulp.src(paths.scripts.srcSkyView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('sky.details.min.js'))
-    .pipe(gulp.dest(paths.scripts.previewDest))
-});
+    .pipe(gulp.dest(paths.scripts.previewDest));
+}
+exports.skyView = skyView;
 
-gulp.task('earth-view', () => {
+function earthView() {
   return gulp.src(paths.scripts.srcEarthView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('earth.details.min.js'))
-    .pipe(gulp.dest(paths.scripts.previewDest))
-});
+    .pipe(gulp.dest(paths.scripts.previewDest));
+}
+exports.earthView = earthView;
 
-gulp.task('space-view', () => {
+function spaceView() {
   return gulp.src(paths.scripts.srcSpaceView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('space.details.min.js'))
-    .pipe(gulp.dest(paths.scripts.previewDest))
-});
+    .pipe(gulp.dest(paths.scripts.previewDest));
+}
+exports.spaceView = spaceView;
 
-gulp.task('loader', () => {
+function loader() {
   return gulp.src(paths.scripts.srcLoader)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('loader.min.js'))
-    .pipe(gulp.dest(paths.scripts.previewDest))
-});
+    .pipe(gulp.dest(paths.scripts.previewDest));
+}
+exports.loader = loader;
 
-gulp.task('sw', () => {
+function sw() {
   return gulp.src(paths.scripts.sw.src)
     .pipe(babel({
       presets: ['@babel/env']
     }))
-    .pipe(gulp.dest(paths.scripts.sw.previewDest))
-});
+    .pipe(gulp.dest(paths.scripts.sw.previewDest));
+}
+exports.sw = sw;
 
-gulp.task('manifest', () => {
+function manifest() {
   return gulp.src(paths.scripts.sw.manifest)
-    .pipe(gulp.dest(paths.scripts.sw.previewDest))
-});
+    .pipe(gulp.dest(paths.scripts.sw.previewDest));
+}
+exports.manifest = manifest;
 
-gulp.task('preview', previewTasks, () => {
+const previewTasks = [
+  sharedScripts,
+  homeView,
+  skyView,
+  earthView,
+  spaceView,
+  loader,
+  sw,
+  manifest,
+  html,
+  fonts,
+  icons,
+  images,
+  wicons,
+  styles
+];
+
+function preview(done) {
+  gulp.series(...previewTasks);
+
   browserSync.init({
     server: 'tmp'
   });
 
-  gulp.watch(paths.scss.watch, ['sass']);
-});
+  gulp.watch(paths.scss.watch, styles);
+  done();
+}
+exports.preview = preview;
 
 /* === END PREVIEW TASKS === */
 
@@ -237,146 +254,173 @@ gulp.task('preview', previewTasks, () => {
 
 /* === BUILD TASKS === */
 
-const buildTasks = [
-  'build-shared-scripts',
-  'build-home-view',
-  'build-sky-view',
-  'build-earth-view',
-  'build-space-view',
-  'build-loader',
-  'build-sw',
-  'build-manifest',
-  'build-html',
-  'build-fonts',
-  'build-icons',
-  'build-images',
-  'build-wicons',
-  'build-sass',
-  'build-manifest'
-];
-
-gulp.task('build-clean', () => {
+function buildClean() {
+  console.log('running build clean');
   return gulp.src(paths.clean.buildSrc, {read: false})
-    .pipe(clean())
-});
+    .pipe(clean());
+}
+exports.buildClean = buildClean;
 
-gulp.task('build-html', () => {
+function buildHTML() {
+  console.log('running build html');
   return gulp.src(paths.html.src)
-    .pipe(gulp.dest(paths.html.buildDest))
-});
+    .pipe(gulp.dest(paths.html.buildDest));
+}
+exports.buildHTML = buildHTML;
 
-gulp.task('build-fonts', () => {
+function buildFonts() {
+  console.log('running build fonts');
   return gulp.src(paths.fonts.src)
-    .pipe(gulp.dest(paths.fonts.buildDest))
-});
+    .pipe(gulp.dest(paths.fonts.buildDest));
+}
+exports.buildFonts = buildFonts;
 
-gulp.task('build-icons', () => {
+function buildIcons() {
+  console.log('running build icons');
   return gulp.src(paths.icons.src)
     .pipe(imagemin({progressive: true}))
-    .pipe(gulp.dest(paths.icons.buildDest))
-});
+    .pipe(gulp.dest(paths.icons.buildDest));
+}
+exports.buildIcons = buildIcons;
 
-gulp.task('build-images', () => {
+function buildImages() {
+  console.log('running build images');
   return gulp.src(paths.images.src)
     .pipe(imageResize({
       percentage: 8,
       imageMagick: true
     }))
     .pipe(imagemin({progressive: true}))
-    .pipe(gulp.dest(paths.images.buildDest))
-});
+    .pipe(gulp.dest(paths.images.buildDest));
+}
+exports.buildImages = buildImages;
 
-gulp.task('build-sass', () => {
+function buildSass() {
+  console.log('running build sass');
   return gulp.src(paths.scss.src)
     .pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
-    .pipe(autoprefixer({
-      browsers: ['last 2 versions']
-    }))
+    .pipe(autoprefixer())
     .pipe(cleanCSS())
-    .pipe(gulp.dest(paths.scss.buildDest))
-});
+    .pipe(gulp.dest(paths.scss.buildDest));
+}
+exports.buildSass = buildSass;
 
-gulp.task('build-wicons', () => {
+function buildWicons() {
+  console.log('running build wicons');
   return gulp.src(paths.wicons.src)
     .pipe(concat('wicons.css'))
     .pipe(cleanCSS())
-    .pipe(gulp.dest(paths.wicons.buildDest))
-});
+    .pipe(gulp.dest(paths.wicons.buildDest));
+}
+exports.buildWicons = buildWicons;
 
-gulp.task('build-shared-scripts', () => {
+function buildSharedScripts() {
+  console.log('running build shared scripts');
   return gulp.src(paths.scripts.srcShared)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('shared.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest(paths.scripts.buildDest))
-});
+    .pipe(gulp.dest(paths.scripts.buildDest));
+}
+exports.buildSharedScripts = buildSharedScripts;
 
-gulp.task('build-home-view', () => {
+function buildHomeView() {
+  console.log('running build home view');
   return gulp.src(paths.scripts.srcHomeView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('index.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest(paths.scripts.buildDest))
-});
+    .pipe(gulp.dest(paths.scripts.buildDest));
+}
+exports.buildHomeView = buildHomeView;
 
-gulp.task('build-sky-view', () => {
+function buildSkyView() {
+  console.log('running build sky view');
   return gulp.src(paths.scripts.srcSkyView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('sky.details.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest(paths.scripts.buildDest))
-});
+    .pipe(gulp.dest(paths.scripts.buildDest));
+}
+exports.buildSkyView = buildSkyView;
 
-gulp.task('build-earth-view', () => {
+function buildEarthView() {
+  console.log('running build earth view');
   return gulp.src(paths.scripts.srcEarthView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('earth.details.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest(paths.scripts.buildDest))
-});
+    .pipe(gulp.dest(paths.scripts.buildDest));
+}
+exports.buildEarthView = buildEarthView;
 
-gulp.task('build-space-view', () => {
+function buildSpaceView() {
+  console.log('running build space view');
   return gulp.src(paths.scripts.srcSpaceView)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('space.details.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest(paths.scripts.buildDest))
-});
+    .pipe(gulp.dest(paths.scripts.buildDest));
+}
+exports.buildSpaceView = buildSpaceView;
 
-gulp.task('build-loader', () => {
+function buildLoader() {
+  console.log('running build loader');
   return gulp.src(paths.scripts.srcLoader)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(concat('loader.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest(paths.scripts.buildDest))
-});
+    .pipe(gulp.dest(paths.scripts.buildDest));
+}
+exports.buildLoader = buildLoader;
 
-gulp.task('build-sw', () => {
+function buildSW() {
+  console.log('running build sw');
   return gulp.src(paths.scripts.sw.src)
     .pipe(babel({
       presets: ['@babel/env']
     }))
     .pipe(uglify())
-    .pipe(gulp.dest(paths.scripts.sw.buildDest))
-});
+    .pipe(gulp.dest(paths.scripts.sw.buildDest));
+}
+exports.buildSW = buildSW;
 
-gulp.task('build-manifest', () => {
+function buildManifest() {
+  console.log('running build manifest');
   return gulp.src(paths.scripts.sw.manifest)
-    .pipe(gulp.dest(paths.scripts.sw.buildDest))
-});
+    .pipe(gulp.dest(paths.scripts.sw.buildDest));
+}
+exports.buildManifest = buildManifest;
 
-gulp.task('build', buildTasks, () => {});
+const buildTasks = [
+  buildSharedScripts,
+  buildHomeView,
+  buildSkyView,
+  buildEarthView,
+  buildSpaceView,
+  buildLoader,
+  buildSW,
+  buildManifest,
+  buildHTML,
+  buildFonts,
+  buildIcons,
+  buildImages,
+  buildWicons,
+  buildSass,
+  buildManifest
+];
+exports.build = gulp.series(...buildTasks);
 
-gulp.task('default', () => {});
+exports.default = () => {};

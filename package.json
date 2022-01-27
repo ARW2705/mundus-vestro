@@ -27,7 +27,7 @@
     "gulp-image-resize": "^0.13.1",
     "gulp-imagemin": "^6.0.0",
     "gulp-rename": "^1.4.0",
-    "gulp-sass": "^4.0.2",
+    "gulp-sass": "^5.1.0",
     "gulp-sourcemaps": "^2.6.5",
     "gulp-uglify": "^3.0.2",
     "gulplog": "^1.0.0",
@@ -35,8 +35,12 @@
     "mocha": "^6.2.0",
     "mocha-jsdom": "^2.0.0",
     "mock-browser": "^0.92.14",
+    "sass": "^1.49.0",
     "url-polyfill": "^1.1.7",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
-  }
+  },
+  "browserslist": [
+    "last 2 versions"
+  ]
 }
