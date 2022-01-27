@@ -200,15 +200,30 @@ class HomeView {
       this.spaceService.fetchSatelliteData(overheadQuery),
       this.issTracker.buildISSTracker()
     ];
-    Promise.all(spaceFetches)
+    const promises = spaceFetches.map(p => {
+      return p.then(
+          val => ({ status: 'fulfilled', value: val }),
+          err => ({ status: 'rejected', reason: err })
+        );
+      }
+    );
+    Promise.all(promises)
       .then(response => {
-        // this.showLoadingScreen(false);
-        const satData = response[0];
-        this.overheadSatData = satData;
+        if (response[0].status === 'fulfilled') {
+          const satData = response[0];
+          this.overheadSatData = satData;
+          this.populateSatelliteCounter(satData.info.satcount);
+          this.populateSatelliteQuickview(this.overheadSatData);
+        } else {
+          const quickview = document.getElementById('satellite-quickview-container');
+          while (quickview.firstChild) {
+            quickview.removeChild(quickview.firstChild);
+          }
+          const errMsg = document.createElement('p');
+          errMsg.innerHTML = 'Error fetching satellite data';
+          quickview.append(errMsg);
+        }
         this.toggleLoadingSpinner(document.getElementById('space-preview-header').children[1]);
-        this.populateSatelliteCounter(satData.info.satcount);
-        this.populateSatelliteQuickview(this.overheadSatData);
-        // expand the section once populated
         const spaceSection = document.getElementById('space');
         const spaceBody = spaceSection.children[1];
         if (spaceBody.classList.contains('collapsed')) {
